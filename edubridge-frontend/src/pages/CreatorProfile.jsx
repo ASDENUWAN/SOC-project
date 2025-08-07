@@ -1,12 +1,10 @@
-// e.g. src/pages/CreatorProfile.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { userApi } from "../api/axios.js";
+import "./profile.css";
 
 export default function CreatorProfile() {
   const { user, logout } = useContext(AuthContext);
-
-  // form state
   const [form, setForm] = useState({ name: "", address: "", mobile: "" });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
 
@@ -14,12 +12,10 @@ export default function CreatorProfile() {
     setForm({ name: user.name, address: user.address, mobile: user.mobile });
   }, [user]);
 
-  // handle text fields
   const onChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  // handle file input
   const onFile = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -28,7 +24,6 @@ export default function CreatorProfile() {
     }
   };
 
-  // submit update
   const onSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
@@ -42,31 +37,15 @@ export default function CreatorProfile() {
   };
 
   return (
-    <div
-      className="card mx-auto my-4 p-4 rounded shadow-sm"
-      style={{ maxWidth: 700 }}
-    >
-      {/* Avatar + file input */}
-      <div className="text-center mb-4">
-        <label
-          htmlFor="profilePicInput"
-          className="d-inline-block position-relative"
-        >
-          {preview ? (
-            <img
-              src={preview}
-              alt="avatar"
-              className="rounded-circle profile-avatar-lg"
-            />
-          ) : (
-            <i className="bi bi-person-circle display-1 text-secondary"></i>
-          )}
-          <span
-            className="position-absolute bottom-0 end-0 bg-white rounded-circle p-1 border"
-            style={{ cursor: "pointer" }}
-          >
-            <i className="bi bi-pencil-fill"></i>
-          </span>
+    <div className="profile-card">
+      <div className="avatar-container">
+        {preview ? (
+          <img src={preview} alt="avatar" className="profile-avatar-lg" />
+        ) : (
+          <i className="bi bi-person-circle profile-avatar-lg text-secondary"></i>
+        )}
+        <label htmlFor="profilePicInput" className="edit-btn">
+          <i className="bi bi-pencil-fill"></i>
         </label>
         <input
           id="profilePicInput"
@@ -77,10 +56,9 @@ export default function CreatorProfile() {
         />
       </div>
 
-      <h3 className="text-center mb-4">Creator Profile</h3>
-      <form onSubmit={onSubmit}>
-        {/* Name */}
-        <div className="mb-3 row">
+      <h3 className="text-center">Creator Profile</h3>
+      <form className="profile-form" onSubmit={onSubmit}>
+        <div className="row form-group">
           <label className="col-sm-3 col-form-label">Name</label>
           <div className="col-sm-9">
             <input
@@ -92,8 +70,7 @@ export default function CreatorProfile() {
           </div>
         </div>
 
-        {/* Address */}
-        <div className="mb-3 row">
+        <div className="row form-group">
           <label className="col-sm-3 col-form-label">Address</label>
           <div className="col-sm-9">
             <input
@@ -105,8 +82,7 @@ export default function CreatorProfile() {
           </div>
         </div>
 
-        {/* Mobile */}
-        <div className="mb-3 row">
+        <div className="row form-group">
           <label className="col-sm-3 col-form-label">Mobile</label>
           <div className="col-sm-9">
             <input
@@ -118,8 +94,7 @@ export default function CreatorProfile() {
           </div>
         </div>
 
-        {/* Buttons */}
-        <div className="d-flex justify-content-between mt-4">
+        <div className="actions">
           <button type="button" className="btn btn-danger" onClick={logout}>
             Delete Account
           </button>
