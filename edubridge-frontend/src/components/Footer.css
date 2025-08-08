@@ -1,0 +1,12 @@
+/* Footer styles */
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #007bff; /* Same as bg-primary */
+  color: white;
+  text-align: center;
+  padding: 1rem;
+  z-index: 10;
+}
