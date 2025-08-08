@@ -1,59 +1,54 @@
 import React, { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../context/AuthContext.jsx";
-import { userApi } from "../api/axios.js";
+import { AuthContext } from "../../context/AuthContext.jsx";
+import { userApi } from "../../api/axios.js";
 import "./profile.css";
 
-export default function CreatorProfile() {
+export default function AdminProfile() {
   const { user, logout } = useContext(AuthContext);
 
   // form data & flags
-  const [form, setForm] = useState({ name: "", address: "", mobile: "" });
+  const [form, setForm] = useState({ name: "", password: "" });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
-  // initialize form fields
+  // initialize form on mount / user change
   useEffect(() => {
-    setForm({ name: user.name, address: user.address, mobile: user.mobile });
+    setForm({ name: user.name, password: "" });
     setPreview(user.profilePicUrl || "");
     setRemovePic(false);
   }, [user]);
 
-  // text field change
+  // handle text inputs
   const onChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  // file chosen
+  // handle new file selection
   const onFile = (e) => {
     const file = e.target.files[0];
     if (file) {
       setPreview(URL.createObjectURL(file));
       setForm((f) => ({ ...f, _file: file }));
-      setRemovePic(false); // user replaced the pic
+      setRemovePic(false);
     }
   };
 
-  // user clicked “Remove”
+  // handle remove-click
   const onRemove = () => {
-    setPreview(""); // clear UI
-    setForm((f) => ({ ...f, _file: null })); // no new upload
-    setRemovePic(true); // signal backend to delete
+    setPreview("");
+    setForm((f) => ({ ...f, _file: null }));
+    setRemovePic(true);
   };
 
-  // submit everything
+  // submit updated profile
   const onSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
     data.append("name", form.name);
-    data.append("address", form.address);
-    data.append("mobile", form.mobile);
-
     if (form.password) data.append("password", form.password);
-
     if (form._file) {
       data.append("profilePic", form._file);
     }
-    // if removePic flagged and no file, tell backend
     if (removePic && !form._file) {
       data.append("removePic", true);
     }
@@ -64,17 +59,16 @@ export default function CreatorProfile() {
 
   return (
     <div className="profile-card">
+      {/* Avatar + controls */}
       <div className="avatar-container">
-        {/* the avatar */}
         {preview ? (
           <img src={preview} alt="avatar" className="profile-avatar-lg" />
         ) : (
           <i className="bi bi-person-circle profile-avatar-lg text-secondary" />
         )}
 
-        {/* grouped controls */}
+        {/* controls wrapper */}
         <div className="avatar-controls">
-          {/* remove first (so trash sits left) */}
           {preview && (
             <button
               type="button"
@@ -85,8 +79,6 @@ export default function CreatorProfile() {
               <i className="bi bi-trash-fill" />
             </button>
           )}
-
-          {/* edit */}
           <label
             htmlFor="profilePicInput"
             className="btn-control edit-btn"
@@ -104,11 +96,13 @@ export default function CreatorProfile() {
         </div>
       </div>
 
-      <h3 className="text-center mb-4">Creator Profile</h3>
+      {/* Title */}
+      <h3 className="text-center mb-4">Admin Profile</h3>
 
+      {/* Profile form */}
       <form className="profile-form" onSubmit={onSubmit}>
-        {/* name */}
-        <div className="row form-group">
+        {/* Name */}
+        <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">Name</label>
           <div className="col-sm-9">
             <input
@@ -120,31 +114,6 @@ export default function CreatorProfile() {
           </div>
         </div>
 
-        {/* address */}
-        <div className="row form-group">
-          <label className="col-sm-3 col-form-label">Address</label>
-          <div className="col-sm-9">
-            <input
-              name="address"
-              className="form-control"
-              value={form.address}
-              onChange={onChange}
-            />
-          </div>
-        </div>
-
-        {/* mobile */}
-        <div className="row form-group">
-          <label className="col-sm-3 col-form-label">Mobile</label>
-          <div className="col-sm-9">
-            <input
-              name="mobile"
-              className="form-control"
-              value={form.mobile}
-              onChange={onChange}
-            />
-          </div>
-        </div>
         {/* Email (read-only) */}
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">Email</label>
@@ -167,7 +136,7 @@ export default function CreatorProfile() {
           </div>
         </div>
 
-        {/* actions */}
+        {/* Action buttons */}
         <div className="actions">
           <button type="button" className="btn btn-danger" onClick={logout}>
             Delete Account

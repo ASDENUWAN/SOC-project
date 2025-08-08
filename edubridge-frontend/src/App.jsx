@@ -10,9 +10,9 @@ import Footer from "./components/Footer.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
-import StudentProfile from "./pages/StudentProfile.jsx";
-import CreatorProfile from "./pages/CreatorProfile.jsx";
-import AdminProfile from "./pages/AdminProfile.jsx";
+import StudentProfile from "./pages/profiles/StudentProfile.jsx";
+import CreatorProfile from "./pages/profiles/CreatorProfile.jsx";
+import AdminProfile from "./pages/profiles/AdminProfile.jsx";
 
 export default function App() {
   return (

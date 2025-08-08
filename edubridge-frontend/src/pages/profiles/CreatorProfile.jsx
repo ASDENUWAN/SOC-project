@@ -1,54 +1,59 @@
 import React, { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../context/AuthContext.jsx";
-import { userApi } from "../api/axios.js";
+import { AuthContext } from "../../context/AuthContext.jsx";
+import { userApi } from "../../api/axios.js";
 import "./profile.css";
 
-export default function AdminProfile() {
+export default function CreatorProfile() {
   const { user, logout } = useContext(AuthContext);
 
   // form data & flags
-  const [form, setForm] = useState({ name: "", password: "" });
+  const [form, setForm] = useState({ name: "", address: "", mobile: "" });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
-  // initialize form on mount / user change
+  // initialize form fields
   useEffect(() => {
-    setForm({ name: user.name, password: "" });
+    setForm({ name: user.name, address: user.address, mobile: user.mobile });
     setPreview(user.profilePicUrl || "");
     setRemovePic(false);
   }, [user]);
 
-  // handle text inputs
+  // text field change
   const onChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
-  // handle new file selection
+  // file chosen
   const onFile = (e) => {
     const file = e.target.files[0];
     if (file) {
       setPreview(URL.createObjectURL(file));
       setForm((f) => ({ ...f, _file: file }));
-      setRemovePic(false);
+      setRemovePic(false); // user replaced the pic
     }
   };
 
-  // handle remove-click
+  // user clicked “Remove”
   const onRemove = () => {
-    setPreview("");
-    setForm((f) => ({ ...f, _file: null }));
-    setRemovePic(true);
+    setPreview(""); // clear UI
+    setForm((f) => ({ ...f, _file: null })); // no new upload
+    setRemovePic(true); // signal backend to delete
   };
 
-  // submit updated profile
+  // submit everything
   const onSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
     data.append("name", form.name);
+    data.append("address", form.address);
+    data.append("mobile", form.mobile);
+
     if (form.password) data.append("password", form.password);
+
     if (form._file) {
       data.append("profilePic", form._file);
     }
+    // if removePic flagged and no file, tell backend
     if (removePic && !form._file) {
       data.append("removePic", true);
     }
@@ -59,16 +64,17 @@ export default function AdminProfile() {
 
   return (
     <div className="profile-card">
-      {/* Avatar + controls */}
       <div className="avatar-container">
+        {/* the avatar */}
         {preview ? (
           <img src={preview} alt="avatar" className="profile-avatar-lg" />
         ) : (
           <i className="bi bi-person-circle profile-avatar-lg text-secondary" />
         )}
 
-        {/* controls wrapper */}
+        {/* grouped controls */}
         <div className="avatar-controls">
+          {/* remove first (so trash sits left) */}
           {preview && (
             <button
               type="button"
@@ -79,6 +85,8 @@ export default function AdminProfile() {
               <i className="bi bi-trash-fill" />
             </button>
           )}
+
+          {/* edit */}
           <label
             htmlFor="profilePicInput"
             className="btn-control edit-btn"
@@ -96,13 +104,11 @@ export default function AdminProfile() {
         </div>
       </div>
 
-      {/* Title */}
-      <h3 className="text-center mb-4">Admin Profile</h3>
+      <h3 className="text-center mb-4">Creator Profile</h3>
 
-      {/* Profile form */}
       <form className="profile-form" onSubmit={onSubmit}>
-        {/* Name */}
-        <div className="form-group mb-3 row">
+        {/* name */}
+        <div className="row form-group">
           <label className="col-sm-3 col-form-label">Name</label>
           <div className="col-sm-9">
             <input
@@ -114,6 +120,31 @@ export default function AdminProfile() {
           </div>
         </div>
 
+        {/* address */}
+        <div className="row form-group">
+          <label className="col-sm-3 col-form-label">Address</label>
+          <div className="col-sm-9">
+            <input
+              name="address"
+              className="form-control"
+              value={form.address}
+              onChange={onChange}
+            />
+          </div>
+        </div>
+
+        {/* mobile */}
+        <div className="row form-group">
+          <label className="col-sm-3 col-form-label">Mobile</label>
+          <div className="col-sm-9">
+            <input
+              name="mobile"
+              className="form-control"
+              value={form.mobile}
+              onChange={onChange}
+            />
+          </div>
+        </div>
         {/* Email (read-only) */}
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">Email</label>
@@ -136,7 +167,7 @@ export default function AdminProfile() {
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* actions */}
         <div className="actions">
           <button type="button" className="btn btn-danger" onClick={logout}>
             Delete Account

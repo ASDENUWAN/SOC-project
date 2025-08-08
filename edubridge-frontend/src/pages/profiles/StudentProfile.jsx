@@ -1,7 +1,7 @@
 // src/pages/StudentProfile.jsx
 import React, { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../context/AuthContext.jsx";
-import { userApi } from "../api/axios.js";
+import { AuthContext } from "../../context/AuthContext.jsx";
+import { userApi } from "../../api/axios.js";
 import "./profile.css";
 
 export default function StudentProfile() {
