@@ -1,7 +1,7 @@
-// src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext.jsx";
+import "./index.css";
 
 import Navbar from "./components/Navbar.jsx";
 import Sidebar from "./components/Sidebar.jsx";
@@ -10,9 +10,13 @@ import Footer from "./components/Footer.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+
 import StudentProfile from "./pages/profiles/StudentProfile.jsx";
 import CreatorProfile from "./pages/profiles/CreatorProfile.jsx";
 import AdminProfile from "./pages/profiles/AdminProfile.jsx";
+
+// Admin page
+import ManageCreators from "./pages/admin/ManageCreators.jsx";
 
 export default function App() {
   return (
@@ -26,7 +30,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* FIXED: Add * to support nested routing */}
+            {/* Profile area with nested tabs */}
             <Route
               path="/profile/*"
               element={
@@ -46,7 +50,6 @@ export default function App() {
 
 function Protected({ children }) {
   const { user, loading } = React.useContext(AuthContext);
-
   if (loading) return <div>Loading...</div>;
   return user ? children : <Navigate to="/login" replace />;
 }
@@ -60,7 +63,11 @@ function ProfileLayout() {
 
       <main className="col-md-9 col-lg-10 p-4">
         <Routes>
-          <Route path="/" element={<ProfileRouter />} />
+          {/* default profile */}
+          <Route path="" element={<ProfileRouter />} />
+          {/* admin tab(s) */}
+          <Route path="manage-creators" element={<ManageCreators />} />
+          {/* you can add more: manage-students, manage-badges, etc. */}
         </Routes>
       </main>
     </div>
@@ -69,7 +76,6 @@ function ProfileLayout() {
 
 function ProfileRouter() {
   const { user } = React.useContext(AuthContext);
-
   if (user?.role === "creator") return <CreatorProfile />;
   if (user?.role === "admin") return <AdminProfile />;
   return <StudentProfile />;

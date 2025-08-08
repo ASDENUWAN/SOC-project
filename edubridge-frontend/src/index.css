@@ -1,6 +1,35 @@
-body {
-  background-color: #f8f9fa;
+/* Navbar height (Bootstrap default ~56px) */
+:root {
+  --nav-h: 56px;
+  --sidebar-w: 240px;
+  --footer-h: 80px; /* match your footer's padding approx */
 }
-.card {
-  background-color: #ffffff;
+
+/* Make the page fill the viewport and keep footer visible without overlap */
+html,
+body,
+#root {
+  height: 100%;
+}
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.app-main {
+  flex: 1 0 auto;
+  padding-bottom: var(--footer-h);
+}
+
+/* On desktop, when sidebar is fixed at left, push content to the right */
+@media (min-width: 800px) {
+  .with-sidebar {
+    margin-left: var(--sidebar-w);
+  }
+}
+
+/* Avoid content touching the edges on small screens */
+.container-fluid {
+  padding-left: 1rem;
+  padding-right: 1rem;
 }

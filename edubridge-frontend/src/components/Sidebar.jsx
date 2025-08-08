@@ -1,43 +1,63 @@
-// src/components/Sidebar.jsx
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
+import { userApi } from "../api/axios.js";
 import "./Sidebar.css";
 
-// Define your per‑role menu items here
 const menuByRole = {
   student: [
     { to: "/profile", label: "Profile" },
-    { to: "/my-courses", label: "My Courses" },
-    { to: "/quizzes", label: "Play Quizzes" },
-    { to: "/my-questions", label: "My Questions" },
+    { to: "/profile/my-courses", label: "My Courses" },
+    { to: "/profile/quizzes", label: "Play Quizzes" },
+    { to: "/profile/my-questions", label: "My Questions" },
   ],
   creator: [
     { to: "/profile", label: "Profile" },
-    { to: "/content", label: "Content Management" },
-    { to: "/messages", label: "Messages" },
-    { to: "/courses", label: "Course Management" },
+    { to: "/profile/content", label: "Content Management" },
+    { to: "/profile/messages", label: "Messages" },
+    { to: "/profile/courses", label: "Course Management" },
   ],
   admin: [
     { to: "/profile", label: "Profile" },
-    { to: "/manage-students", label: "Manage Students" },
-    { to: "/manage-creators", label: "Manage Creators" },
-    { to: "/manage-badges", label: "Manage Badges" },
+    { to: "/profile/manage-students", label: "Manage Students" },
+    {
+      to: "/profile/manage-creators",
+      label: "Manage Creators",
+      badge: "pendingCreators",
+    },
+    { to: "/profile/manage-badges", label: "Manage Badges" },
   ],
 };
 
 export default function Sidebar() {
   const { user } = useContext(AuthContext);
   const [open, setOpen] = useState(false);
+  const [pendingCreators, setPendingCreators] = useState(0);
 
-  if (!user) return null; // only show when logged in
+  useEffect(() => {
+    const load = async () => {
+      if (user?.role === "admin") {
+        try {
+          const { data } = await userApi.get("/creators");
+          setPendingCreators(
+            Array.isArray(data?.pending) ? data.pending.length : 0
+          ); // FIX count
+        } catch {
+          setPendingCreators(0);
+        }
+      }
+    };
+    load();
+  }, [user]);
+
+  if (!user) return null;
 
   const menu = menuByRole[user.role] || [];
   const avatar = user.profilePicUrl || "";
 
   return (
     <>
-      {/* 1) Toggle button (mobile only) */}
+      {/* Mobile toggle */}
       <button
         className="sidebar-toggle"
         onClick={() => setOpen((o) => !o)}
@@ -46,10 +66,9 @@ export default function Sidebar() {
         {open ? <i className="bi bi-x-lg"></i> : <i className="bi bi-list"></i>}
       </button>
 
-      {/* 2) Sidebar container */}
+      {/* Sidebar */}
       <aside className={`sidebar${open ? " open" : ""}`}>
-        {/* Avatar + Name */}
-        <div className="sidebar-header text-center">
+        <div className="sidebar-header">
           {avatar ? (
             <img src={avatar} alt="Avatar" className="sidebar-avatar" />
           ) : (
@@ -57,7 +76,6 @@ export default function Sidebar() {
           )}
           <h5 className="mt-2 sidebar-username">{user.name}</h5>
 
-          {/* Creator stars */}
           {user.role === "creator" && typeof user.rating === "number" && (
             <div className="rating-stars">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -70,20 +88,24 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Divider */}
         <hr className="sidebar-divider" />
 
-        {/* Navigation */}
         <nav className="sidebar-nav">
-          {menu.map(({ to, label }) => (
+          {menu.map(({ to, label, badge }) => (
             <NavLink
               to={to}
               key={to}
-              className="sidebar-link"
-              activeclassname="active"
-              onClick={() => setOpen(false)} // close on mobile click
+              className={({ isActive }) =>
+                `sidebar-link${isActive ? " active" : ""}`
+              }
+              onClick={() => setOpen(false)} // close overlay on mobile
             >
-              {label}
+              <span>{label}</span>
+              {badge === "pendingCreators" && pendingCreators > 0 && (
+                <span className="badge rounded-pill bg-warning text-dark ms-2">
+                  {pendingCreators}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
