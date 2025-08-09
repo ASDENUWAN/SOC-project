@@ -1,3 +1,4 @@
+// src/pages/profiles/CreatorProfile.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { userApi } from "../../api/axios.js";
@@ -6,21 +7,43 @@ import "./profile.css";
 export default function CreatorProfile() {
   const { user, logout } = useContext(AuthContext);
 
-  // form data & flags
+  // profile form
   const [form, setForm] = useState({ name: "", address: "", mobile: "" });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
-  // initialize form fields
+  // password form
+  const [pw, setPw] = useState({
+    current: "",
+    next: "",
+    confirm: "",
+  });
+
+  // UI state
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
   useEffect(() => {
-    setForm({ name: user.name, address: user.address, mobile: user.mobile });
+    setForm({
+      name: user.name || "",
+      address: user.address || "",
+      mobile: user.mobile || "",
+    });
     setPreview(user.profilePicUrl || "");
     setRemovePic(false);
+    setPw({ current: "", next: "", confirm: "" });
+    setErr("");
   }, [user]);
 
   // text field change
   const onChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  };
+
+  // password field change
+  const onPw = (e) => {
+    const { name, value } = e.target;
+    setPw((p) => ({ ...p, [name]: value }));
   };
 
   // file chosen
@@ -29,52 +52,84 @@ export default function CreatorProfile() {
     if (file) {
       setPreview(URL.createObjectURL(file));
       setForm((f) => ({ ...f, _file: file }));
-      setRemovePic(false); // user replaced the pic
+      setRemovePic(false);
     }
   };
 
-  // user clicked “Remove”
+  // remove pic
   const onRemove = () => {
-    setPreview(""); // clear UI
-    setForm((f) => ({ ...f, _file: null })); // no new upload
-    setRemovePic(true); // signal backend to delete
+    setPreview("");
+    setForm((f) => ({ ...f, _file: null }));
+    setRemovePic(true);
   };
 
-  // submit everything
+  // validate password trio if any field is provided
+  const validatePassword = () => {
+    const anyFilled = pw.current || pw.next || pw.confirm;
+    if (!anyFilled) return true;
+
+    if (!pw.current || !pw.next || !pw.confirm) {
+      setErr(
+        "Please fill current password, new password, and confirm password."
+      );
+      return false;
+    }
+    if (pw.next.length < 4) {
+      setErr("New password must be at least 4 characters.");
+      return false;
+    }
+    if (pw.next !== pw.confirm) {
+      setErr("New password and confirmation do not match.");
+      return false;
+    }
+    return true;
+  };
+
+  // submit
   const onSubmit = async (e) => {
     e.preventDefault();
+    setErr("");
+
+    if (!validatePassword()) return;
+
     const data = new FormData();
     data.append("name", form.name);
     data.append("address", form.address);
     data.append("mobile", form.mobile);
 
-    if (form.password) data.append("password", form.password);
-
-    if (form._file) {
-      data.append("profilePic", form._file);
-    }
-    // if removePic flagged and no file, tell backend
-    if (removePic && !form._file) {
-      data.append("removePic", true);
+    // password trio (only if filled)
+    if (pw.current || pw.next || pw.confirm) {
+      data.append("currentPassword", pw.current);
+      data.append("newPassword", pw.next);
+      data.append("confirmPassword", pw.confirm);
     }
 
-    await userApi.put("/profile", data);
-    window.location.reload();
+    if (form._file) data.append("profilePic", form._file);
+    if (removePic && !form._file) data.append("removePic", true);
+
+    try {
+      setSaving(true);
+      await userApi.put("/profile", data);
+      // refresh to reflect latest info
+      window.location.reload();
+    } catch (e2) {
+      setErr(e2?.response?.data?.message || "Update failed. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="profile-card">
+      {/* Avatar */}
       <div className="avatar-container">
-        {/* the avatar */}
         {preview ? (
           <img src={preview} alt="avatar" className="profile-avatar-lg" />
         ) : (
           <i className="bi bi-person-circle profile-avatar-lg text-secondary" />
         )}
 
-        {/* grouped controls */}
         <div className="avatar-controls">
-          {/* remove first (so trash sits left) */}
           {preview && (
             <button
               type="button"
@@ -86,7 +141,6 @@ export default function CreatorProfile() {
             </button>
           )}
 
-          {/* edit */}
           <label
             htmlFor="profilePicInput"
             className="btn-control edit-btn"
@@ -105,6 +159,9 @@ export default function CreatorProfile() {
       </div>
 
       <h3 className="text-center mb-4">Creator Profile</h3>
+
+      {/* inline error */}
+      {err && <div className="alert alert-danger py-2">{err}</div>}
 
       <form className="profile-form" onSubmit={onSubmit}>
         {/* name */}
@@ -145,6 +202,7 @@ export default function CreatorProfile() {
             />
           </div>
         </div>
+
         {/* Email (read-only) */}
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">Email</label>
@@ -153,16 +211,44 @@ export default function CreatorProfile() {
           </div>
         </div>
 
-        {/* New Password */}
+        {/* Password change (optional) */}
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Current Password</label>
+          <div className="col-sm-9">
+            <input
+              type="password"
+              name="current"
+              className="form-control"
+              value={pw.current}
+              onChange={onPw}
+              placeholder="Leave blank if not changing"
+            />
+          </div>
+        </div>
+
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">New Password</label>
           <div className="col-sm-9">
             <input
               type="password"
-              name="password"
+              name="next"
               className="form-control"
-              value={form.password}
-              onChange={onChange}
+              value={pw.next}
+              onChange={onPw}
+              placeholder="Min 4 characters"
+            />
+          </div>
+        </div>
+
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Confirm Password</label>
+          <div className="col-sm-9">
+            <input
+              type="password"
+              name="confirm"
+              className="form-control"
+              value={pw.confirm}
+              onChange={onPw}
             />
           </div>
         </div>
@@ -172,8 +258,8 @@ export default function CreatorProfile() {
           <button type="button" className="btn btn-danger" onClick={logout}>
             Delete Account
           </button>
-          <button type="submit" className="btn btn-primary">
-            Update Profile
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "Updating..." : "Update Profile"}
           </button>
         </div>
       </form>

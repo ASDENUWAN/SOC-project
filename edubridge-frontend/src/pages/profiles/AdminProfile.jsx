@@ -1,3 +1,4 @@
+// src/pages/profiles/AdminProfile.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { userApi } from "../../api/axios.js";
@@ -6,24 +7,30 @@ import "./profile.css";
 export default function AdminProfile() {
   const { user, logout } = useContext(AuthContext);
 
-  // form data & flags
-  const [form, setForm] = useState({ name: "", password: "" });
+  // profile fields
+  const [form, setForm] = useState({ name: "" });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
-  // initialize form on mount / user change
+  // password fields
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+
+  // ui state
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
   useEffect(() => {
-    setForm({ name: user.name, password: "" });
+    setForm({ name: user.name || "" });
     setPreview(user.profilePicUrl || "");
     setRemovePic(false);
+    setPw({ current: "", next: "", confirm: "" });
+    setErr("");
   }, [user]);
 
-  // handle text inputs
-  const onChange = (e) => {
+  const onChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-  };
+  const onPw = (e) => setPw((p) => ({ ...p, [e.target.name]: e.target.value }));
 
-  // handle new file selection
   const onFile = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -33,33 +40,64 @@ export default function AdminProfile() {
     }
   };
 
-  // handle remove-click
   const onRemove = () => {
     setPreview("");
     setForm((f) => ({ ...f, _file: null }));
     setRemovePic(true);
   };
 
-  // submit updated profile
+  const validatePassword = () => {
+    const any = pw.current || pw.next || pw.confirm;
+    if (!any) return true;
+    if (!pw.current || !pw.next || !pw.confirm) {
+      setErr(
+        "Please fill current password, new password, and confirm password."
+      );
+      return false;
+    }
+    if (pw.next.length < 4) {
+      setErr("New password must be at least 4 characters.");
+      return false;
+    }
+    if (pw.next !== pw.confirm) {
+      setErr("New password and confirmation do not match.");
+      return false;
+    }
+    return true;
+  };
+
   const onSubmit = async (e) => {
     e.preventDefault();
+    setErr("");
+    if (!validatePassword()) return;
+
     const data = new FormData();
     data.append("name", form.name);
-    if (form.password) data.append("password", form.password);
-    if (form._file) {
-      data.append("profilePic", form._file);
-    }
-    if (removePic && !form._file) {
-      data.append("removePic", true);
+
+    // attach password trio only if used
+    if (pw.current || pw.next || pw.confirm) {
+      data.append("currentPassword", pw.current);
+      data.append("newPassword", pw.next);
+      data.append("confirmPassword", pw.confirm);
     }
 
-    await userApi.put("/profile", data);
-    window.location.reload();
+    if (form._file) data.append("profilePic", form._file);
+    if (removePic && !form._file) data.append("removePic", true);
+
+    try {
+      setSaving(true);
+      await userApi.put("/profile", data);
+      window.location.reload();
+    } catch (e2) {
+      setErr(e2?.response?.data?.message || "Update failed. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="profile-card">
-      {/* Avatar + controls */}
+      {/* Avatar */}
       <div className="avatar-container">
         {preview ? (
           <img src={preview} alt="avatar" className="profile-avatar-lg" />
@@ -67,7 +105,6 @@ export default function AdminProfile() {
           <i className="bi bi-person-circle profile-avatar-lg text-secondary" />
         )}
 
-        {/* controls wrapper */}
         <div className="avatar-controls">
           {preview && (
             <button
@@ -96,10 +133,10 @@ export default function AdminProfile() {
         </div>
       </div>
 
-      {/* Title */}
       <h3 className="text-center mb-4">Admin Profile</h3>
 
-      {/* Profile form */}
+      {err && <div className="alert alert-danger py-2">{err}</div>}
+
       <form className="profile-form" onSubmit={onSubmit}>
         {/* Name */}
         <div className="form-group mb-3 row">
@@ -122,27 +159,54 @@ export default function AdminProfile() {
           </div>
         </div>
 
-        {/* New Password */}
+        {/* Password change (optional) */}
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Current Password</label>
+          <div className="col-sm-9">
+            <input
+              type="password"
+              name="current"
+              className="form-control"
+              value={pw.current}
+              onChange={onPw}
+              placeholder="Leave blank if not changing"
+            />
+          </div>
+        </div>
+
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">New Password</label>
           <div className="col-sm-9">
             <input
               type="password"
-              name="password"
+              name="next"
               className="form-control"
-              value={form.password}
-              onChange={onChange}
+              value={pw.next}
+              onChange={onPw}
+              placeholder="Min 4 characters"
             />
           </div>
         </div>
 
-        {/* Action buttons */}
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Confirm Password</label>
+          <div className="col-sm-9">
+            <input
+              type="password"
+              name="confirm"
+              className="form-control"
+              value={pw.confirm}
+              onChange={onPw}
+            />
+          </div>
+        </div>
+
         <div className="actions">
           <button type="button" className="btn btn-danger" onClick={logout}>
             Delete Account
           </button>
-          <button type="submit" className="btn btn-primary">
-            Update Profile
+          <button type="submit" className="btn btn-primary" disabled={saving}>
+            {saving ? "Updating..." : "Update Profile"}
           </button>
         </div>
       </form>
