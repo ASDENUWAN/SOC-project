@@ -8,14 +8,20 @@ import authRoutes from "./routes/auth.routes.js";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // your React app URL
+    credentials: true, // <— allows Access-Control-Allow-Credentials: true
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
 // Routes
 app.use("/api/auth", authRoutes);
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4010;
 (async () => {
   await testConnection();
   // In dev, sync models → create tables if missing

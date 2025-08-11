@@ -37,10 +37,10 @@ export const login = async (req, res) => {
   }
 };
 
-export const signin = async (req, res, next) => {
+// auth service: controllers/auth.controller.js (signin)
+export const signin = async (req, res) => {
   const { email, password } = req.body;
 
-  // 1) Basic validation
   if (
     !email ||
     !password ||
@@ -51,15 +51,10 @@ export const signin = async (req, res, next) => {
   }
 
   try {
-    // 2) Lookup user
     const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // 3) If Creator, check approval status
     if (user.role === "creator" && user.status !== "approved") {
-      // You can customize messaging per status
       if (user.status === "pending") {
         return res
           .status(403)
@@ -71,32 +66,49 @@ export const signin = async (req, res, next) => {
       }
     }
 
-    // 4) Verify password
     const matches = await bcrypt.compare(password, user.passwordHash);
-    if (!matches) {
-      return res.status(401).json({ message: "Wrong credentials" });
-    }
+    if (!matches) return res.status(401).json({ message: "Wrong credentials" });
 
-    // 5) Generate JWT
-    const payload = { id: user.id, role: user.role };
+    // ✅ Put everything other services need into the token
+    const payload = {
+      id: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      // optionally:
+      // profilePicUrl: user.profilePicUrl,
+    };
+
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || "1h",
     });
 
-    // 6) Send cookie
-    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    res.cookie("access_token", token, {
+    // use a consistent cookie name across services
+    const cookieName = process.env.JWT_COOKIE_NAME || "access_token";
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    res.cookie(cookieName, token, {
       httpOnly: true,
-      expires: expiry,
+      expires: new Date(Date.now() + oneDayMs),
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     });
 
-    // 7) Return safe user object + token
     const { passwordHash, ...safeUser } = user.toJSON();
     return res.status(200).json({ user: safeUser, token, role: user.role });
   } catch (err) {
     console.error("Error in signin:", err);
     return res.status(500).json({ message: "Server error. Please try again." });
   }
+};
+
+export const logout = (req, res) => {
+  // Clear the cookie set at signin()
+  res
+    .clearCookie("access_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    })
+    .status(200)
+    .json({ message: "Logged out successfully" });
 };
