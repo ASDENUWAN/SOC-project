@@ -25,6 +25,7 @@ const menuByRole = {
       label: "Manage Creators",
       badge: "pendingCreators",
     },
+    { to: "/profile/manage-courses", label: "Manage Courses" }, // NEW
     { to: "/profile/manage-badges", label: "Manage Badges" },
   ],
 };
@@ -41,7 +42,7 @@ export default function Sidebar() {
           const { data } = await userApi.get("/creators");
           setPendingCreators(
             Array.isArray(data?.pending) ? data.pending.length : 0
-          ); // FIX count
+          );
         } catch {
           setPendingCreators(0);
         }
@@ -57,7 +58,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         className="sidebar-toggle"
         onClick={() => setOpen((o) => !o)}
@@ -66,7 +66,6 @@ export default function Sidebar() {
         {open ? <i className="bi bi-x-lg"></i> : <i className="bi bi-list"></i>}
       </button>
 
-      {/* Sidebar */}
       <aside className={`sidebar${open ? " open" : ""}`}>
         <div className="sidebar-header">
           {avatar ? (
@@ -98,7 +97,7 @@ export default function Sidebar() {
               className={({ isActive }) =>
                 `sidebar-link${isActive ? " active" : ""}`
               }
-              onClick={() => setOpen(false)} // close overlay on mobile
+              onClick={() => setOpen(false)}
             >
               <span>{label}</span>
               {badge === "pendingCreators" && pendingCreators > 0 && (

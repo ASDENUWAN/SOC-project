@@ -15,8 +15,9 @@ import StudentProfile from "./pages/profiles/StudentProfile.jsx";
 import CreatorProfile from "./pages/profiles/CreatorProfile.jsx";
 import AdminProfile from "./pages/profiles/AdminProfile.jsx";
 
-// Admin page
 import ManageCreators from "./pages/admin/ManageCreators.jsx";
+import ManageCourses from "./pages/admin/ManageCourses.jsx";
+import CourseManagement from "./pages/creator/CourseManagement.jsx";
 
 export default function App() {
   return (
@@ -30,7 +31,6 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Profile area with nested tabs */}
             <Route
               path="/profile/*"
               element={
@@ -63,11 +63,12 @@ function ProfileLayout() {
 
       <main className="col-md-9 col-lg-10 p-4">
         <Routes>
-          {/* default profile */}
           <Route path="" element={<ProfileRouter />} />
-          {/* admin tab(s) */}
+          {/* creator */}
+          <Route path="courses" element={<CourseManagement />} />
+          {/* admin */}
           <Route path="manage-creators" element={<ManageCreators />} />
-          {/* you can add more: manage-students, manage-badges, etc. */}
+          <Route path="manage-courses" element={<ManageCourses />} />
         </Routes>
       </main>
     </div>
