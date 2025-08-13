@@ -14,53 +14,81 @@ export default function SectionManager({ course }) {
   const [file, setFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  // Load all sections for this course
   const load = async () => {
-    const { data } = await getSections(course.id);
-    setList(data);
+    const { data } = await getSections(course.id); // returns ARRAY now
+    setList(Array.isArray(data) ? data : []);
   };
+
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course.id]);
 
+  // Add a new section
   const add = async (e) => {
     e.preventDefault();
     setSaving(true);
     try {
       if (type === "text") {
-        await createSection(course.id, { type, title, text });
+        await createSection(course.id, {
+          title,
+          contentType: "text",
+          textContent: text,
+        });
       } else {
+        if (!file) {
+          alert(`Please choose a ${type.toUpperCase()} file`);
+          return;
+        }
         const fd = new FormData();
-        fd.append("type", type);
         fd.append("title", title);
-        if (file) fd.append("file", file);
+        fd.append("contentType", type); // 'video' | 'pdf'
+        fd.append("file", file);
         await createSection(course.id, fd, true);
       }
+
+      // reset inputs
       setType("text");
       setTitle("");
       setText("");
       setFile(null);
+
       await load();
     } finally {
       setSaving(false);
     }
   };
 
+  // Edit a text section
   const editText = async (s) => {
-    const newTitle = prompt("New title", s.title) ?? s.title;
-    const newText = prompt("New text", s.text || "") ?? s.text;
-    await updateSection(s.id, { title: newTitle, text: newText });
+    const newTitle = prompt("New title", s.title);
+    if (newTitle === null) return;
+    const newText = prompt("New text", s.textContent || "");
+    if (newText === null) return;
+
+    await updateSection(s.id, {
+      title: newTitle,
+      contentType: "text",
+      textContent: newText,
+    });
     await load();
   };
 
+  // Replace a file for video/pdf
   const replaceFile = async (s) => {
-    const newTitle = prompt("New title", s.title) ?? s.title;
+    const newTitle = prompt("New title", s.title);
+    if (newTitle === null) return;
+
     const picker = document.createElement("input");
     picker.type = "file";
-    picker.accept = s.type === "video" ? "video/*" : "application/pdf";
+    picker.accept = s.contentType === "video" ? "video/*" : "application/pdf";
     picker.onchange = async () => {
+      if (!picker.files?.[0]) return;
       const fd = new FormData();
       fd.append("title", newTitle);
-      if (picker.files?.[0]) fd.append("file", picker.files[0]);
+      fd.append("contentType", s.contentType); // keep type
+      fd.append("file", picker.files[0]);
       await updateSection(s.id, fd, true);
       await load();
     };
@@ -79,7 +107,9 @@ export default function SectionManager({ course }) {
         <strong>Sections</strong>
         <span className="small text-muted">Course ID: {course.id}</span>
       </div>
+
       <div className="card-body">
+        {/* Create form */}
         <form onSubmit={add} className="row g-3 align-items-end">
           <div className="col-md-3">
             <label className="form-label">Type</label>
@@ -93,6 +123,7 @@ export default function SectionManager({ course }) {
               <option value="pdf">PDF</option>
             </select>
           </div>
+
           <div className="col-md-5">
             <label className="form-label">Title</label>
             <input
@@ -102,6 +133,7 @@ export default function SectionManager({ course }) {
               required
             />
           </div>
+
           {type === "text" ? (
             <div className="col-12">
               <label className="form-label">Content</label>
@@ -124,6 +156,7 @@ export default function SectionManager({ course }) {
               />
             </div>
           )}
+
           <div className="col-12 d-flex justify-content-end">
             <button className="btn btn-primary" disabled={saving}>
               {saving ? "Saving..." : "Add Section"}
@@ -131,6 +164,7 @@ export default function SectionManager({ course }) {
           </div>
         </form>
 
+        {/* List */}
         <div className="table-responsive mt-4">
           <table className="table align-middle">
             <thead className="table-light">
@@ -139,7 +173,7 @@ export default function SectionManager({ course }) {
                 <th>Type</th>
                 <th>Created</th>
                 <th>Updated</th>
-                <th className="text-end" style={{ width: 220 }}>
+                <th className="text-end" style={{ width: 260 }}>
                   Actions
                 </th>
               </tr>
@@ -149,7 +183,7 @@ export default function SectionManager({ course }) {
                 list.map((s) => (
                   <tr key={s.id}>
                     <td>{s.title}</td>
-                    <td className="text-capitalize">{s.type}</td>
+                    <td className="text-capitalize">{s.contentType}</td>
                     <td className="small text-muted">
                       {new Date(s.createdAt).toLocaleString()}
                     </td>
@@ -157,7 +191,20 @@ export default function SectionManager({ course }) {
                       {new Date(s.updatedAt).toLocaleString()}
                     </td>
                     <td className="text-end">
-                      {s.type === "text" ? (
+                      {/* View link for file-based sections */}
+                      {(s.contentType === "video" || s.contentType === "pdf") &&
+                        s.contentUrl && (
+                          <a
+                            href={s.contentUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn btn-sm btn-outline-success me-2"
+                          >
+                            View
+                          </a>
+                        )}
+
+                      {s.contentType === "text" ? (
                         <button
                           className="btn btn-sm btn-outline-secondary me-2"
                           onClick={() => editText(s)}
@@ -172,6 +219,7 @@ export default function SectionManager({ course }) {
                           Replace File
                         </button>
                       )}
+
                       <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => remove(s)}

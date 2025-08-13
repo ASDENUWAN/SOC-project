@@ -17,7 +17,7 @@ export const courseApi = axios.create({
 });
 
 /* Creator – courses */
-export const getMyCourses = () => courseApi.get("/courses/mine");
+export const getMyCourses = () => courseApi.get("/courses");
 export const createCourse = (payload) => courseApi.post("/courses", payload);
 export const updateCourse = (id, payload) =>
   courseApi.put(`/courses/${id}`, payload);
