@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/user.model.js";
 import { s3 } from "../utils/s3.js";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { putObjectFromBuffer, deleteObjectByKey } from "../utils/s3.js";
 
 // GET /profile
 export const getProfile = (req, res) => {
@@ -10,17 +10,16 @@ export const getProfile = (req, res) => {
 };
 
 // PUT /profile
-// PUT /profile
 export const updateProfile = async (req, res) => {
   try {
     const {
       name,
       mobile,
       address,
-      removePic,
-      currentPassword, // optional, required if changing password
+      removePic, // "true"/"1"/true to remove
+      currentPassword, // optional
       newPassword, // optional
-      confirmPassword, // optional: match check
+      confirmPassword, // optional
     } = req.body;
 
     const updates = {};
@@ -45,55 +44,55 @@ export const updateProfile = async (req, res) => {
           .status(400)
           .json({ message: "New password must be at least 4 characters" });
       }
-
       const ok = await bcrypt.compare(currentPassword, req.user.passwordHash);
-      if (!ok) {
+      if (!ok)
         return res
           .status(401)
           .json({ message: "Current password is incorrect" });
-      }
 
-      const newHash = await bcrypt.hash(newPassword, 10);
-      updates.passwordHash = newHash; // NEVER store plain password
+      updates.passwordHash = await bcrypt.hash(newPassword, 10);
     }
 
     // ===== Profile picture (upload/replace/remove) =====
-    const oldUrl = req.user.profilePicUrl;
+    const wantsRemove =
+      String(removePic).toLowerCase() === "true" || removePic === "1";
+    const hadOldKey = req.user.profilePicKey;
 
-    if (req.file) {
-      // replace: delete old then store new
-      if (oldUrl) {
-        const oldKey = oldUrl.split("/").pop();
+    // Case A: New file uploaded -> upload new, then delete old
+    if (req.file && req.file.buffer) {
+      const { key, url } = await putObjectFromBuffer({
+        buffer: req.file.buffer,
+        contentType: req.file.mimetype,
+        keyPrefix: "profiles",
+        userId: req.user.id,
+      });
+      updates.profilePicUrl = url;
+      updates.profilePicKey = key;
+
+      // persist first so DB always has a valid image
+      await req.user.update(updates);
+
+      // delete old (best-effort)
+      if (hadOldKey) {
         try {
-          await s3.send(
-            new DeleteObjectCommand({
-              Bucket: process.env.S3_BUCKET,
-              Key: oldKey,
-            })
-          );
-        } catch (_) {}
+          await deleteObjectByKey(hadOldKey);
+        } catch (e) {
+          /* log only */
+        }
       }
-      updates.profilePicUrl = req.file.location;
-    } else if (removePic === "true" || removePic === true) {
-      // explicit remove
-      if (oldUrl) {
-        const oldKey = oldUrl.split("/").pop();
-        try {
-          await s3.send(
-            new DeleteObjectCommand({
-              Bucket: process.env.S3_BUCKET,
-              Key: oldKey,
-            })
-          );
-        } catch (_) {}
-      }
+    }
+    // Case B: removePic=true and no new file -> delete from S3 and clear fields
+    else if (wantsRemove && hadOldKey) {
+      await deleteObjectByKey(hadOldKey);
       updates.profilePicUrl = null;
+      updates.profilePicKey = null;
+      await req.user.update(updates);
+    }
+    // Case C: just field updates (no pic change)
+    else {
+      await req.user.update(updates);
     }
 
-    // Persist
-    await req.user.update(updates);
-
-    // Return sanitized user
     const userJson = req.user.toJSON();
     delete userJson.passwordHash;
     return res.json(userJson);
@@ -102,7 +101,6 @@ export const updateProfile = async (req, res) => {
     return res.status(500).json({ message: "Couldn’t update profile" });
   }
 };
-
 // Admin: GET /users
 export const listUsers = async (req, res) => {
   const users = await User.findAll({
@@ -120,22 +118,18 @@ export const approveCreator = async (req, res) => {
   res.json({ message: "Creator approved" });
 };
 
-// Admin: DELETE /users/:id
+// Admin: DELETE /users/:id  (delete profile pic first)
 export const deleteUser = async (req, res) => {
   const user = await User.findByPk(req.params.id);
   if (!user) return res.status(404).json({ message: "User not found" });
 
-  const oldUrl = user.profilePicUrl;
-  if (oldUrl) {
-    const oldKey = oldUrl.split("/").pop();
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: process.env.S3_BUCKET,
-        Key: oldKey,
-      })
-    );
+  if (user.profilePicKey) {
+    try {
+      await deleteObjectByKey(user.profilePicKey);
+    } catch (e) {
+      /* log only */
+    }
   }
-
   await user.destroy();
   res.json({ message: "User deleted" });
 };
@@ -143,24 +137,19 @@ export const deleteUser = async (req, res) => {
 // DELETE /profile (self)
 export const deleteMyProfile = async (req, res) => {
   try {
-    const oldUrl = req.user.profilePicUrl;
-    if (oldUrl) {
-      const oldKey = oldUrl.split("/").pop();
-      await s3.send(
-        new DeleteObjectCommand({
-          Bucket: process.env.S3_BUCKET,
-          Key: oldKey,
-        })
-      );
+    if (req.user.profilePicKey) {
+      try {
+        await deleteObjectByKey(req.user.profilePicKey);
+      } catch (e) {
+        /* log only */
+      }
     }
-
     await req.user.destroy();
-    res.clearCookie("token", {
+    res.clearCookie(process.env.JWT_COOKIE_NAME || "token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
     });
-
     res.json({ message: "Account deleted" });
   } catch (err) {
     console.error("❌ deleteMyProfile error:", err);
@@ -236,25 +225,21 @@ export const setCreatorRating = async (req, res) => {
   res.json({ id: user.id, rating: user.rating });
 };
 
-// DELETE /creators/:id
+// Creators API: unchanged except delete
 export const deleteCreator = async (req, res) => {
   const { id } = req.params;
-
   const user = await User.findByPk(id);
   if (!user || user.role !== "creator") {
     return res.status(404).json({ message: "Creator not found" });
   }
 
-  if (user.profilePicUrl) {
-    const oldKey = user.profilePicUrl.split("/").pop();
-    await s3.send(
-      new DeleteObjectCommand({
-        Bucket: process.env.S3_BUCKET,
-        Key: oldKey,
-      })
-    );
+  if (user.profilePicKey) {
+    try {
+      await deleteObjectByKey(user.profilePicKey);
+    } catch (e) {
+      /* log only */
+    }
   }
-
   await user.destroy();
   res.json({ message: "Creator deleted" });
 };
