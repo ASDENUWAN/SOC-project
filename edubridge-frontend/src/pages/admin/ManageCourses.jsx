@@ -1,8 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { adminListCourses, adminSetCourseStatus } from "../../api/axios.js";
+import {
+  adminListPendingCourses,
+  adminListAllCourses,
+  adminSetCourseStatus,
+} from "../../api/api.js";
 
 const Badge = ({ status }) => {
-  const map = { pending: "warning", approved: "success", rejected: "danger" };
+  // NOTE: backend uses 'submitted' not 'pending'
+  const map = {
+    submitted: "warning",
+    approved: "success",
+    rejected: "danger",
+    draft: "secondary",
+  };
   return (
     <span className={`badge bg-${map[status] || "secondary"}`}>{status}</span>
   );
@@ -18,16 +28,21 @@ export default function ManageCourses() {
   const load = async () => {
     setLoading(true);
     try {
-      const [p, all] = await Promise.all([
-        adminListCourses("pending"),
-        adminListCourses(),
+      const [pRes, allRes] = await Promise.all([
+        adminListPendingCourses(),
+        adminListAllCourses(),
       ]);
-      setPending(p.data);
-      setOthers(all.data.filter((c) => c.status !== "pending"));
+      const all = allRes.data || [];
+      const draft = pRes.data || [];
+
+      // other = everything that is NOT submitted
+      setPending(draft);
+      setOthers(all.filter((c) => c.status !== "draft"));
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     load();
   }, []);
@@ -35,10 +50,10 @@ export default function ManageCourses() {
   const filtered = (list) =>
     !q.trim()
       ? list
-      : list.filter(
-          (c) =>
-            c.title.toLowerCase().includes(q.toLowerCase()) ||
-            (c.creatorName || "").toLowerCase().includes(q.toLowerCase())
+      : list.filter((c) =>
+          `${c.title} ${c.subject} ${c.gradeLevel} ${c.language}`
+            .toLowerCase()
+            .includes(q.toLowerCase())
         );
 
   const setStatus = async (c, status) => {
@@ -51,33 +66,35 @@ export default function ManageCourses() {
     }
   };
 
-  const Row = ({ c, actions }) => (
+  const Row = ({ c, showActions }) => (
     <tr>
       <td className="fw-medium">{c.title}</td>
       <td>{c.subject}</td>
       <td>{c.gradeLevel}</td>
       <td>{c.language}</td>
-      <td>
-        {c.creatorName}{" "}
-        <span className="small text-muted">&lt;{c.creatorEmail}&gt;</span>
-      </td>
+      <td>{c.creatorId}</td>
       <td>
         <Badge status={c.status} />
       </td>
-      <td className="text-end" style={{ width: 240 }}>
-        {actions ? (
+      <td className="text-end" style={{ width: 260 }}>
+        {showActions ? (
           <div className="btn-group">
+            {/* Approve */}
             <button
               className="btn btn-outline-success btn-sm"
-              disabled={savingId === c.id}
+              disabled={savingId === c.id || c.status === "approved"}
               onClick={() => setStatus(c, "approved")}
+              title={c.status === "approved" ? "Already approved" : "Approve"}
             >
               Approve
             </button>
+
+            {/* Reject – allowed for submitted OR already approved */}
             <button
               className="btn btn-outline-danger btn-sm"
-              disabled={savingId === c.id}
+              disabled={savingId === c.id || c.status === "rejected"}
               onClick={() => setStatus(c, "rejected")}
+              title={c.status === "rejected" ? "Already rejected" : "Reject"}
             >
               Reject
             </button>
@@ -99,7 +116,7 @@ export default function ManageCourses() {
           </span>
           <input
             className="form-control"
-            placeholder="Search by title/creator"
+            placeholder="Search by title/subject/grade/lang"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -110,9 +127,10 @@ export default function ManageCourses() {
         <div className="text-muted">Loading…</div>
       ) : (
         <>
+          {/* Submitted (pending approval) */}
           <div className="card mb-4 shadow-sm">
             <div className="card-header bg-warning-subtle">
-              <strong>Pending Approval</strong>
+              <strong>Submitted (Pending Approval)</strong>
             </div>
             <div className="table-responsive">
               <table className="table align-middle mb-0">
@@ -130,11 +148,11 @@ export default function ManageCourses() {
                 <tbody>
                   {filtered(pending).length ? (
                     filtered(pending).map((c) => (
-                      <Row key={c.id} c={c} actions />
+                      <Row key={c.id} c={c} showActions />
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" className="text-center text-muted py-4">
+                      <td colSpan="6" className="text-center text-muted py-4">
                         Nothing pending
                       </td>
                     </tr>
@@ -144,6 +162,7 @@ export default function ManageCourses() {
             </div>
           </div>
 
+          {/* All other courses */}
           <div className="card shadow-sm">
             <div className="card-header">
               <strong>All Courses</strong>
@@ -164,11 +183,11 @@ export default function ManageCourses() {
                 <tbody>
                   {filtered(others).length ? (
                     filtered(others).map((c) => (
-                      <Row key={c.id} c={c} actions />
+                      <Row key={c.id} c={c} showActions />
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="7" className="text-center text-muted py-4">
+                      <td colSpan="6" className="text-center text-muted py-4">
                         No courses
                       </td>
                     </tr>

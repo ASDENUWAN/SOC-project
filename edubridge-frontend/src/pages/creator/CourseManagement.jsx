@@ -4,7 +4,7 @@ import {
   deleteCourse,
   getMyCourses,
   updateCourse,
-} from "../../api/axios.js";
+} from "../../api/api.js";
 import CourseForm from "../../components/CourseForm.jsx";
 import SectionManager from "./SectionManager.jsx";
 

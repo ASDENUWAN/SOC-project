@@ -9,6 +9,9 @@ import Footer from "./components/Footer.jsx";
 
 import Home from "./pages/Home.jsx";
 import About from "./pages/About.jsx";
+import CourseCatalog from "./pages/CourseCatalog.jsx";
+import CourseView from "./pages/CourseView.jsx";
+
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 
@@ -30,6 +33,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/courses" element={<CourseCatalog />} />
+            <Route path="/course/:id" element={<CourseView />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 

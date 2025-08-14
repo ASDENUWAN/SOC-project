@@ -38,6 +38,11 @@ export default function Navbar() {
               </NavLink>
             </li>
             <li className="nav-item">
+              <NavLink to="/courses" end className="nav-link nav-link-soft">
+                Courses
+              </NavLink>
+            </li>
+            <li className="nav-item">
               <NavLink to="/about" className="nav-link nav-link-soft">
                 About
               </NavLink>
