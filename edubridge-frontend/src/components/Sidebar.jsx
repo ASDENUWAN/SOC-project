@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
-import { userApi, adminListPendingCourses } from "../api/axios.js";
+import { adminListPendingCourses } from "../api/api.js";
+import { userApi } from "../api/axios.js";
 import "./Sidebar.css";
 
 const menuByRole = {
