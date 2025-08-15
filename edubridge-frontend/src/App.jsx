@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext.jsx";
@@ -23,12 +24,16 @@ import ManageCreators from "./pages/admin/ManageCreators.jsx";
 import ManageCourses from "./pages/admin/ManageCourses.jsx";
 import CourseManagement from "./pages/creator/CourseManagement.jsx";
 
+// NEW
+import MyEnrollments from "./pages/MyEnrollments.jsx";
+import CreatorInsights from "./pages/creator/CreatorInsights.jsx";
+import CreatorLearners from "./pages/creator/CreatorLearners.jsx";
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Navbar />
-
         <div className="container-fluid main-with-fixed-footer">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -48,7 +53,6 @@ export default function App() {
             />
           </Routes>
         </div>
-
         <Footer />
       </AuthProvider>
     </BrowserRouter>
@@ -71,8 +75,18 @@ function ProfileLayout() {
       <main className="col-md-9 col-lg-10 p-4">
         <Routes>
           <Route path="" element={<ProfileRouter />} />
+
+          {/* student */}
+          <Route path="my-courses" element={<MyEnrollments />} />
+
           {/* creator */}
           <Route path="courses" element={<CourseManagement />} />
+          <Route path="courses/insights" element={<CreatorInsights />} />
+          <Route
+            path="courses/:courseId/learners"
+            element={<CreatorLearners />}
+          />
+
           {/* admin */}
           <Route path="manage-creators" element={<ManageCreators />} />
           <Route path="manage-courses" element={<ManageCourses />} />
