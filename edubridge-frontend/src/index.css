@@ -50,3 +50,5 @@ footer {
 .main-with-fixed-footer {
   padding-bottom: 80px; /* ≈ footer height */
 }
+
+/* src/index.css (add near bottom) */

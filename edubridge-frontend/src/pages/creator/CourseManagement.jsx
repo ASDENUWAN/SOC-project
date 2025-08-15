@@ -1,3 +1,4 @@
+// src/pages/creator/CourseManagement.jsx
 import React, { useEffect, useState } from "react";
 import {
   createCourse,
@@ -5,11 +6,18 @@ import {
   getMyCourses,
   updateCourse,
 } from "../../api/api.js";
+import { Link, useNavigate } from "react-router-dom";
 import CourseForm from "../../components/CourseForm.jsx";
 import SectionManager from "./SectionManager.jsx";
 
 const StatusBadge = ({ status }) => {
-  const map = { pending: "warning", approved: "success", rejected: "danger" };
+  const map = {
+    pending: "warning",
+    approved: "success",
+    rejected: "danger",
+    submitted: "info",
+    draft: "secondary",
+  };
   return (
     <span className={`badge bg-${map[status] || "secondary"}`}>{status}</span>
   );
@@ -22,6 +30,8 @@ export default function CourseManagement() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(null);
   const [sectionsFor, setSectionsFor] = useState(null);
+
+  const navigate = useNavigate();
 
   const load = async () => {
     setLoading(true);
@@ -65,6 +75,14 @@ export default function CourseManagement() {
       <div className="d-flex align-items-center justify-content-between mb-3">
         <h2 className="h4 mb-0">Course Management</h2>
         <div className="d-flex gap-2">
+          <button
+            className="btn btn-outline-primary"
+            onClick={() => navigate("/profile/courses/insights")}
+            title="View enrollments overview"
+          >
+            <i className="bi bi-people me-2" />
+            Enrollments Overview
+          </button>
           <div className="input-group" style={{ maxWidth: 320 }}>
             <span className="input-group-text">
               <i className="bi bi-search" />
@@ -98,7 +116,7 @@ export default function CourseManagement() {
                 <th>Grade</th>
                 <th>Language</th>
                 <th>Status</th>
-                <th className="text-end" style={{ width: 260 }}>
+                <th className="text-end" style={{ width: 360 }}>
                   Actions
                 </th>
               </tr>
@@ -132,12 +150,20 @@ export default function CourseManagement() {
                           Edit
                         </button>
                         {c.status === "approved" && (
-                          <button
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => setSectionsFor(c)}
-                          >
-                            Sections
-                          </button>
+                          <>
+                            <button
+                              className="btn btn-outline-primary btn-sm"
+                              onClick={() => setSectionsFor(c)}
+                            >
+                              Sections
+                            </button>
+                            <Link
+                              className="btn btn-outline-success btn-sm"
+                              to={`/profile/courses/${c.id}/learners`}
+                            >
+                              Learners
+                            </Link>
+                          </>
                         )}
                         <button
                           className="btn btn-outline-danger btn-sm"
