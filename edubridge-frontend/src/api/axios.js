@@ -14,3 +14,8 @@ export const courseApi = axios.create({
   baseURL: "http://localhost:4030/api/courses",
   withCredentials: true,
 });
+
+export const enrollmentApi = axios.create({
+  baseURL: "http://localhost:4040/api/enrollments",
+  withCredentials: true,
+});
