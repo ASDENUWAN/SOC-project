@@ -1,4 +1,3 @@
-// src/models/section.model.js
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
 import { Course } from "./course.model.js";
@@ -14,7 +13,8 @@ export const Section = sequelize.define(
       type: DataTypes.ENUM("video", "pdf", "text"),
       allowNull: false,
     },
-    contentUrl: { type: DataTypes.TEXT }, // for video/pdf
+    contentUrl: { type: DataTypes.TEXT }, // public URL (video/pdf)
+    contentKey: { type: DataTypes.TEXT }, // ← exact S3 key
     textContent: { type: DataTypes.TEXT }, // for text
   },
   { tableName: "sections", timestamps: true }
