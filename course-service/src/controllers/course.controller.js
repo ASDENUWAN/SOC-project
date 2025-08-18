@@ -38,6 +38,16 @@ export const publicGet = async (req, res) => {
   res.json(course);
 };
 
+export const publicGetSummary = async (req, res) => {
+  const course = await Course.findByPk(req.params.id, {
+    attributes: { exclude: ["rejectReason"] },
+  });
+  if (!course || course.status !== "approved") {
+    return res.status(404).json({ message: "Course not found" });
+  }
+  res.json(course);
+};
+
 /* =========================================================
    CREATOR / ADMIN (protected)
    ========================================================= */

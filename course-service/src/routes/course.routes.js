@@ -6,6 +6,7 @@ import {
   // public
   publicList,
   publicGet,
+  publicGetSummary,
 
   // creator/admin
   myCourses,
@@ -32,6 +33,7 @@ const router = Router();
 /* ----- Public (students) ----- */
 router.get("/public/courses", publicList);
 router.get("/public/courses/:id", publicGet);
+router.get("/public/courses/:id/summary", publicGetSummary);
 
 /* ----- Protected ----- */
 router.use(protect);
