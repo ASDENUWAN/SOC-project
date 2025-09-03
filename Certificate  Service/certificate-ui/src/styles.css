@@ -1,0 +1,43 @@
+:root {
+  --frame: #2c54a2;
+  --accent: #6a34b8;
+  --badge: #e9ecef;
+  --paper: #faf7ef;
+}
+body { background:#f7f7fb; }
+.header-logo { font-weight: 700; font-size: 1.8rem; display:flex; gap:.5rem; align-items:center; }
+.certificate-preview {
+  background: var(--paper);
+  width: 100%;
+  aspect-ratio: 1.414/1; /* A4 landscape: sqrt(2) */
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+.certificate-inner {
+  position:absolute; inset:2rem;
+  background-size: cover; background-position:center;
+  border: 14px solid var(--frame);
+  outline: 8px solid white;
+  padding: 2.4rem;
+  border-radius: 10px;
+}
+.certificate-title { font-weight:800; color: var(--accent); font-size: 2.2rem; text-align:center; }
+.certificate-name { font-size: 2.4rem; font-weight: 700; text-align:center; margin: 1rem 0 .2rem; color: #2c2c2c;}
+.certificate-course { font-size: 1.8rem; font-weight: 800; color:#2c54a2; text-align:center; margin-top:.6rem;}
+.certificate-badges { display:flex; gap:.6rem; justify-content:center; margin-top:1rem;}
+.badge-chip {
+  font-size:.85rem; background:var(--badge);
+  border-radius: 20px; padding:.35rem .7rem; border: 1px solid rgba(0,0,0,.08);
+}
+.footer-sign { position:absolute; left:2.4rem; bottom:2rem; width: 240px; text-align:center; }
+.footer-sign img { width: 240px; opacity: .9; }
+.footer-sign small { display:block; border-top:1px solid #222; margin-top:-.4rem; padding-top:.2rem; }
+.footer-seal { position:absolute; right:3rem; bottom:2rem; }
+.footer-seal img { width: 120px; }
+.brand {
+  display:flex; align-items:center; gap:.5rem; justify-content:center; margin-bottom:.6rem; color:#2c2c2c;
+}
+.brand .logo-cap { font-size: 2.2rem; color: #cfb53b; }
+.smallmuted { color:#6c757d; font-size:.95rem; text-align:center; }
