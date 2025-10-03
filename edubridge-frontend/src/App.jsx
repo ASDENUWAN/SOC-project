@@ -13,6 +13,7 @@ import About from "./pages/About.jsx";
 import CourseCatalog from "./pages/CourseCatalog.jsx";
 import CourseView from "./pages/CourseView.jsx";
 import CreatorsView from "./pages/PublicCreators.jsx";
+import ContactUs from "./pages/ContactUs.jsx";
 
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/courses" element={<CourseCatalog />} />
             <Route path="/creators" element={<CreatorsView />} />
             <Route path="/course/:id" element={<CourseView />} />
+            <Route path="/contact" element={<ContactUs />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
