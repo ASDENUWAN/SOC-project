@@ -19,10 +19,9 @@ import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/roles.js";
 
 const router = Router();
-// Public route (no auth)
 router.get("/public/creators", listPublicCreators);
-// Protected routes (need auth)
 router.use(protect);
+// Public route (no auth)
 
 // Self profile
 router.get("/profile", getProfile);
