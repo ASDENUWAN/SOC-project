@@ -2,8 +2,7 @@ import axios from "axios";
 import { Enrollment } from "../models/enrollment.model.js";
 import { Completion } from "../models/completion.model.js";
 
-const COURSE_SERVICE =
-  process.env.COURSE_SERVICE_URL || "http://localhost:4030";
+const COURSE_SERVICE = "http://localhost:4030";
 
 /* ─────────────────────────────────────────────────────────
    Helpers
