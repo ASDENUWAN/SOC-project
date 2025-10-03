@@ -132,11 +132,122 @@ export const listMyEnrollments = async (req, res) => {
 
 // POST /api/enrollments/me/:courseId/sections/:sectionId/toggle
 // body: { done: boolean }
+// export const toggleSectionDone = async (req, res) => {
+//   const { courseId, sectionId } = req.params;
+//   const { done } = req.body;
+
+//   // ensure enrollment
+//   const enr = await Enrollment.findOne({
+//     where: { courseId, studentId: req.user.id },
+//   });
+//   if (!enr || enr.status === "cancelled") {
+//     return res.status(404).json({ message: "Not enrolled" });
+//   }
+
+//   // verify section belongs to this approved course
+//   let sections = [];
+//   try {
+//     sections = await getSectionsForApprovedCourse(courseId);
+//   } catch {
+//     return res
+//       .status(400)
+//       .json({ message: "Course is not available for progress tracking" });
+//   }
+//   const exists = sections.some((s) => String(s.id) === String(sectionId));
+//   if (!exists) {
+//     return res.status(400).json({ message: "Invalid section for this course" });
+//   }
+
+//   // find or create completion row
+//   let rec = await Completion.findOne({
+//     where: { enrollmentId: enr.id, sectionId },
+//   });
+
+//   if (done) {
+//     if (!rec) {
+//       rec = await Completion.create({
+//         enrollmentId: enr.id,
+//         sectionId,
+//         isCompleted: true,
+//         completedAt: new Date(),
+//       });
+//     } else if (!rec.isCompleted) {
+//       rec.isCompleted = true;
+//       rec.completedAt = new Date();
+//       await rec.save();
+//     }
+//   } else {
+//     // UNCHECK — do not delete; just mark as not completed
+//     if (rec && rec.isCompleted) {
+//       rec.isCompleted = false;
+//       rec.completedAt = null;
+//       await rec.save();
+//     }
+//   }
+
+//   // refresh totals (cache if already set, otherwise fetch)
+//   let total = enr.totalSections;
+//   if (!total || total <= 0) {
+//     total = sections.length;
+//   }
+
+//   const completedCount = await Completion.count({
+//     where: { enrollmentId: enr.id, isCompleted: true },
+//   });
+
+//   enr.totalSections = total;
+//   enr.progress = computeProgress(completedCount, total);
+
+//   // update lastSectionId as the most recently completed, or null if none
+//   const latestCompletedId = await getLatestCompletedSectionId(enr.id);
+//   enr.lastSectionId = latestCompletedId;
+
+//   // status transitions
+//   if (enr.progress === 100 && enr.status !== "completed") {
+//     enr.status = "completed";
+//     enr.completedAt = new Date();
+//   } else if (enr.progress < 100 && enr.status === "completed") {
+//     // user un-checked something after reaching 100% → revert to active
+//     enr.status = "active";
+//     enr.completedAt = null;
+//   }
+
+//   await enr.save();
+
+//   res.json({
+//     status: enr.status,
+//     progress: enr.progress,
+//     totalSections: enr.totalSections,
+//     lastSectionId: enr.lastSectionId,
+//   });
+// };
+async function recalcProgress(enr) {
+  const sections = await getSectionsForApprovedCourse(enr.courseId);
+  const total = sections.length || 1; // avoid divide by 0
+
+  const completedCount = await Completion.count({
+    where: { enrollmentId: enr.id, isCompleted: true },
+  });
+
+  enr.totalSections = total;
+  enr.progress = Math.round((completedCount / total) * 100);
+
+  // status transitions
+  if (enr.progress === 100 && enr.status !== "completed") {
+    enr.status = "completed";
+    enr.completedAt = new Date();
+  } else if (enr.progress < 100 && enr.status === "completed") {
+    enr.status = "active";
+    enr.completedAt = null;
+  }
+
+  return enr.save();
+}
+// POST /me/:courseId/sections/:sectionId/toggle
 export const toggleSectionDone = async (req, res) => {
   const { courseId, sectionId } = req.params;
   const { done } = req.body;
 
-  // ensure enrollment
   const enr = await Enrollment.findOne({
     where: { courseId, studentId: req.user.id },
   });
@@ -153,16 +264,14 @@ export const toggleSectionDone = async (req, res) => {
       .status(400)
       .json({ message: "Course is not available for progress tracking" });
   }
-  const exists = sections.some((s) => String(s.id) === String(sectionId));
-  if (!exists) {
+  if (!sections.some((s) => String(s.id) === String(sectionId))) {
     return res.status(400).json({ message: "Invalid section for this course" });
   }
 
-  // find or create completion row
+  // update completion
   let rec = await Completion.findOne({
     where: { enrollmentId: enr.id, sectionId },
   });
-
   if (done) {
     if (!rec) {
       rec = await Completion.create({
@@ -176,43 +285,14 @@ export const toggleSectionDone = async (req, res) => {
       rec.completedAt = new Date();
       await rec.save();
     }
-  } else {
-    // UNCHECK — do not delete; just mark as not completed
-    if (rec && rec.isCompleted) {
-      rec.isCompleted = false;
-      rec.completedAt = null;
-      await rec.save();
-    }
+  } else if (rec && rec.isCompleted) {
+    rec.isCompleted = false;
+    rec.completedAt = null;
+    await rec.save();
   }
 
-  // refresh totals (cache if already set, otherwise fetch)
-  let total = enr.totalSections;
-  if (!total || total <= 0) {
-    total = sections.length;
-  }
-
-  const completedCount = await Completion.count({
-    where: { enrollmentId: enr.id, isCompleted: true },
-  });
-
-  enr.totalSections = total;
-  enr.progress = computeProgress(completedCount, total);
-
-  // update lastSectionId as the most recently completed, or null if none
-  const latestCompletedId = await getLatestCompletedSectionId(enr.id);
-  enr.lastSectionId = latestCompletedId;
-
-  // status transitions
-  if (enr.progress === 100 && enr.status !== "completed") {
-    enr.status = "completed";
-    enr.completedAt = new Date();
-  } else if (enr.progress < 100 && enr.status === "completed") {
-    // user un-checked something after reaching 100% → revert to active
-    enr.status = "active";
-    enr.completedAt = null;
-  }
-
-  await enr.save();
+  // 🔥 Always recalc with latest section count
+  await recalcProgress(enr);
 
   res.json({
     status: enr.status,
