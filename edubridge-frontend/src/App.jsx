@@ -20,6 +20,7 @@ import StudentProfile from "./pages/profiles/StudentProfile.jsx";
 import CreatorProfile from "./pages/profiles/CreatorProfile.jsx";
 import AdminProfile from "./pages/profiles/AdminProfile.jsx";
 
+import ManageStudents from "./pages/admin/ManageStudents.jsx";
 import ManageCreators from "./pages/admin/ManageCreators.jsx";
 import ManageCourses from "./pages/admin/ManageCourses.jsx";
 import CourseManagement from "./pages/creator/CourseManagement.jsx";
@@ -88,6 +89,7 @@ function ProfileLayout() {
           />
 
           {/* admin */}
+          <Route path="manage-students" element={<ManageStudents />} />
           <Route path="manage-creators" element={<ManageCreators />} />
           <Route path="manage-courses" element={<ManageCourses />} />
         </Routes>
