@@ -8,7 +8,11 @@ export default function StudentProfile() {
   const { user, logout } = useContext(AuthContext);
 
   // profile fields
-  const [form, setForm] = useState({ name: "", mobile: "" });
+  const [form, setForm] = useState({
+    title: user.title || "",
+    name: "",
+    mobile: "",
+  });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
@@ -21,6 +25,7 @@ export default function StudentProfile() {
 
   useEffect(() => {
     setForm({
+      title: user.title || "",
       name: user.name || "",
       mobile: user.mobile || "",
     });
@@ -96,6 +101,7 @@ export default function StudentProfile() {
     if (!validatePassword()) return;
 
     const data = new FormData();
+    data.append("title", form.title);
     data.append("name", form.name);
     data.append("mobile", form.mobile);
 
@@ -162,6 +168,24 @@ export default function StudentProfile() {
       {err && <div className="alert alert-danger py-2">{err}</div>}
 
       <form className="profile-form" onSubmit={onSubmit}>
+        {/* Title */}
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Title</label>
+          <div className="col-sm-9">
+            <select
+              name="title"
+              className="form-select"
+              value={form.title}
+              onChange={onChange}
+            >
+              <option value="">Select</option>
+              <option value="Mr">Mr</option>
+              <option value="Ms">Ms</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Dr">Dr</option>
+            </select>
+          </div>
+        </div>
         {/* Username */}
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">Username</label>

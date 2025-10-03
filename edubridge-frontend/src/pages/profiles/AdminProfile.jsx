@@ -8,7 +8,12 @@ export default function AdminProfile() {
   const { user, logout } = useContext(AuthContext);
 
   // profile fields
-  const [form, setForm] = useState({ name: "" });
+
+  const [form, setForm] = useState({
+    title: user.title || "",
+    name: user.name || "",
+  });
+
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
@@ -20,7 +25,7 @@ export default function AdminProfile() {
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    setForm({ name: user.name || "" });
+    setForm({ title: user.title || "", name: user.name || "" });
     setPreview(user.profilePicUrl || "");
     setRemovePic(false);
     setPw({ current: "", next: "", confirm: "" });
@@ -73,6 +78,7 @@ export default function AdminProfile() {
 
     const data = new FormData();
     data.append("name", form.name);
+    data.append("title", form.title);
 
     // attach password trio only if used
     if (pw.current || pw.next || pw.confirm) {
@@ -138,6 +144,24 @@ export default function AdminProfile() {
       {err && <div className="alert alert-danger py-2">{err}</div>}
 
       <form className="profile-form" onSubmit={onSubmit}>
+        {/* Title */}
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Title</label>
+          <div className="col-sm-9">
+            <select
+              name="title"
+              className="form-select"
+              value={form.title}
+              onChange={onChange}
+            >
+              <option value="">Select</option>
+              <option value="Mr">Mr</option>
+              <option value="Ms">Ms</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Dr">Dr</option>
+            </select>
+          </div>
+        </div>
         {/* Name */}
         <div className="form-group mb-3 row">
           <label className="col-sm-3 col-form-label">Name</label>

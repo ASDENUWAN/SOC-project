@@ -8,7 +8,12 @@ export default function CreatorProfile() {
   const { user, logout } = useContext(AuthContext);
 
   // profile form
-  const [form, setForm] = useState({ name: "", address: "", mobile: "" });
+  const [form, setForm] = useState({
+    title: user.title || "",
+    name: "",
+    address: "",
+    mobile: "",
+  });
   const [preview, setPreview] = useState(user.profilePicUrl || "");
   const [removePic, setRemovePic] = useState(false);
 
@@ -25,6 +30,7 @@ export default function CreatorProfile() {
 
   useEffect(() => {
     setForm({
+      title: user.title || "",
       name: user.name || "",
       address: user.address || "",
       mobile: user.mobile || "",
@@ -93,6 +99,7 @@ export default function CreatorProfile() {
     if (!validatePassword()) return;
 
     const data = new FormData();
+    data.append("title", form.title);
     data.append("name", form.name);
     data.append("address", form.address);
     data.append("mobile", form.mobile);
@@ -164,6 +171,24 @@ export default function CreatorProfile() {
       {err && <div className="alert alert-danger py-2">{err}</div>}
 
       <form className="profile-form" onSubmit={onSubmit}>
+        {/* Title */}
+        <div className="form-group mb-3 row">
+          <label className="col-sm-3 col-form-label">Title</label>
+          <div className="col-sm-9">
+            <select
+              name="title"
+              className="form-select"
+              value={form.title}
+              onChange={onChange}
+            >
+              <option value="">Select</option>
+              <option value="Mr">Mr</option>
+              <option value="Ms">Ms</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Dr">Dr</option>
+            </select>
+          </div>
+        </div>
         {/* name */}
         <div className="row form-group">
           <label className="col-sm-3 col-form-label">Name</label>

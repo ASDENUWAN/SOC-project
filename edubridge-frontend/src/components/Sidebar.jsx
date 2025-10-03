@@ -90,7 +90,7 @@ export default function Sidebar() {
           ) : (
             <i className="bi bi-person-circle sidebar-avatar-icon"></i>
           )}
-          <h5 className="mt-2 sidebar-username">{user.name}</h5>
+          <h5 className="mt-2 sidebar-username">Hi,{user.name}</h5>
 
           {user.role === "creator" && typeof user.rating === "number" && (
             <div className="rating-stars">

@@ -106,7 +106,10 @@ export default function ManageCreators() {
         <i className="bi bi-person-circle" style={{ fontSize: 28 }}></i>
       )}
       <div>
-        <div className="fw-semibold">{c.name}</div>
+        <div className="fw-semibold">
+          {c.title ? `${c.title} ` : ""}
+          {c.name}
+        </div>
         {/* clickable email */}
         <div className="small">
           <a href={`mailto:${c.email}`} className="text-decoration-none">
