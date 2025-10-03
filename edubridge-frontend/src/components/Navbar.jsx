@@ -48,6 +48,11 @@ export default function Navbar() {
               </NavLink>
             </li>
             <li className="nav-item">
+              <NavLink to="/creators" className="nav-link nav-link-soft">
+                Our Creators
+              </NavLink>
+            </li>
+            <li className="nav-item">
               <NavLink to="/contact" className="nav-link nav-link-soft">
                 Contact
               </NavLink>
