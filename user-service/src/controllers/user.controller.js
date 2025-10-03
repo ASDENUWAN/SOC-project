@@ -8,11 +8,30 @@ export const getProfile = (req, res) => {
   const { passwordHash, ...userData } = req.user.toJSON();
   res.json(userData);
 };
+// GET /public/creators
+export const listPublicCreators = async (req, res) => {
+  const creators = await User.findAll({
+    where: { role: "creator", status: "approved" },
+    order: [["createdAt", "DESC"]],
+    attributes: [
+      "id",
+      "title",
+      "name",
+      "email",
+      "mobile",
+      "profilePicUrl",
+      "createdAt",
+      "rating",
+    ],
+  });
+  res.json(creators.map((c) => c.toJSON()));
+};
 
 // PUT /profile
 export const updateProfile = async (req, res) => {
   try {
     const {
+      title,
       name,
       mobile,
       address,
@@ -23,6 +42,13 @@ export const updateProfile = async (req, res) => {
     } = req.body;
 
     const updates = {};
+    if (typeof title === "string") {
+      const allowed = ["Mr", "Ms", "Mrs", "Dr"];
+      if (!allowed.includes(title)) {
+        return res.status(400).json({ message: "Invalid title" });
+      }
+      updates.title = title;
+    }
     if (typeof name === "string") updates.name = name;
     if (typeof mobile === "string") updates.mobile = mobile;
     if (typeof address === "string") updates.address = address;
@@ -107,6 +133,16 @@ export const listUsers = async (req, res) => {
     attributes: { exclude: ["passwordHash"] },
   });
   res.json(users.map((u) => u.toJSON()));
+};
+
+// Admin: GET /students
+export const listStudents = async (req, res) => {
+  const students = await User.findAll({
+    where: { role: "student" },
+    order: [["createdAt", "DESC"]],
+    attributes: { exclude: ["passwordHash"] },
+  });
+  res.json(students.map((s) => s.toJSON()));
 };
 
 // Admin: PUT /users/:id/approve (legacy)

@@ -8,16 +8,20 @@ import {
   approveCreator,
   deleteUser,
   // new
+  listStudents,
   listCreatorsGrouped,
   setCreatorStatus,
   setCreatorRating,
   deleteCreator,
+  listPublicCreators,
 } from "../controllers/user.controller.js";
 import { protect } from "../middleware/auth.js";
 import { authorize } from "../middleware/roles.js";
 
 const router = Router();
-
+// Public route (no auth)
+router.get("/public/creators", listPublicCreators);
+// Protected routes (need auth)
 router.use(protect);
 
 // Self profile
@@ -31,6 +35,7 @@ router.put("/users/:id/approve", authorize("admin"), approveCreator);
 router.delete("/users/:id", authorize("admin"), deleteUser);
 
 // Admin-only creators management
+router.get("/students", authorize("admin"), listStudents);
 router.get("/creators", authorize("admin"), listCreatorsGrouped);
 router.put("/creators/:id/status", authorize("admin"), setCreatorStatus);
 router.put("/creators/:id/rating", authorize("admin"), setCreatorRating);
