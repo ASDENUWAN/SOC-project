@@ -7,6 +7,7 @@ export default function Register() {
   const { register } = useContext(AuthContext);
 
   const [form, setForm] = useState({
+    title: "",
     name: "",
     email: "",
     password: "",
@@ -27,6 +28,7 @@ export default function Register() {
   };
 
   const validate = () => {
+    if (!form.title) return "Please select a title.";
     if (!form.name.trim()) return "Name is required.";
     if (!form.email.trim()) return "Email is required.";
     if (form.password.length < 6)
@@ -53,6 +55,7 @@ export default function Register() {
     setLoading(true);
     try {
       const payload = {
+        title: form.title,
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
@@ -145,21 +148,39 @@ export default function Register() {
                     </div>
                   </div>
 
-                  {/* Name */}
-                  <div className="mb-3">
-                    <label className="form-label">Full Name</label>
-                    <div className="input-group input-group-lg auth-field">
-                      <span className="input-group-text bg-white border-end-0">
-                        <i className="bi bi-person"></i>
-                      </span>
-                      <input
-                        name="name"
-                        className="form-control border-start-0"
-                        placeholder="Jane Doe"
-                        value={form.name}
+                  {/* Title + Name */}
+                  <div className="row g-3 mb-3">
+                    <div className="col-md-4">
+                      <label className="form-label">Title</label>
+                      <select
+                        name="title"
+                        className="form-select"
+                        value={form.title}
                         onChange={onChange}
                         required
-                      />
+                      >
+                        <option value="">Select</option>
+                        <option value="Mr">Mr</option>
+                        <option value="Ms">Ms</option>
+                        <option value="Mrs">Mrs</option>
+                        <option value="Dr">Dr</option>
+                      </select>
+                    </div>
+                    <div className="col-md-8">
+                      <label className="form-label">Full Name</label>
+                      <div className="input-group input-group-lg auth-field">
+                        <span className="input-group-text bg-white border-end-0">
+                          <i className="bi bi-person"></i>
+                        </span>
+                        <input
+                          name="name"
+                          className="form-control border-start-0"
+                          placeholder="Jane Doe"
+                          value={form.name}
+                          onChange={onChange}
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
 
