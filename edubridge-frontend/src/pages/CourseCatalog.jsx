@@ -1,7 +1,8 @@
 // src/pages/CourseCatalog.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { listPublicCourses } from "../api/api.js";
 import { Link, useSearchParams } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext.jsx";
 import SubjectTabs from "../components/SubjectTabs.jsx";
 
 export default function CourseCatalog() {
@@ -9,6 +10,7 @@ export default function CourseCatalog() {
   const [list, setList] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext);
 
   const subject = (params.get("subject") || "").toLowerCase();
 
@@ -51,7 +53,6 @@ export default function CourseCatalog() {
         </div>
       </div>
 
-      {/* Subject Tabs */}
       <SubjectTabs />
 
       {loading ? (
@@ -98,7 +99,7 @@ export default function CourseCatalog() {
                       className="btn btn-outline-primary btn-sm"
                       to={`/course/${c.id}`}
                     >
-                      View Details
+                      {user ? "View" : "View Details"}
                     </Link>
                     <i className="bi bi-arrow-right-circle text-primary fs-5"></i>
                   </div>

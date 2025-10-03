@@ -1,8 +1,8 @@
 // src/pages/CourseView.jsx
 import React, { useContext, useEffect, useState } from "react";
 import {
-  getPublicCourseFull,
   getPublicCourseSummary,
+  getPublicCourseFull,
   enrollCourse,
   unenrollCourse,
   getMyEnrollment,
@@ -11,74 +11,88 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext.jsx";
 
-/* One row per section with inline Text Reader */
-function SectionItem({ section, checked, toggling, onToggle }) {
+/* Section Item Renderer */
+function SectionItem({ section, checked, toggling, onToggle, role }) {
   const [open, setOpen] = useState(false);
   const isText = section.contentType === "text";
+  const isPdf = section.contentType === "pdf";
+  const isVideo = section.contentType === "video";
 
   return (
     <li className="list-group-item">
       <div className="d-flex justify-content-between align-items-center">
-        <div className="d-flex flex-column">
+        <div>
           <div className="fw-semibold">{section.title}</div>
-          <div className="small text-muted text-uppercase">
-            {section.contentType}
-          </div>
+          <div className="small text-muted">{section.contentType}</div>
         </div>
 
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex gap-2 align-items-center">
           {isText ? (
             <button
               className="btn btn-sm btn-outline-secondary"
               onClick={() => setOpen((o) => !o)}
-              aria-expanded={open}
             >
               {open ? "Hide Text" : "View Text"}
             </button>
-          ) : (
-            <a
+          ) : isPdf ? (
+            <button
               className="btn btn-sm btn-outline-primary"
-              href={section.contentUrl}
-              target="_blank"
-              rel="noreferrer"
+              onClick={() => setOpen((o) => !o)}
             >
-              Open {section.contentType.toUpperCase()}
-            </a>
-          )}
+              {open ? "Hide PDF" : "Preview PDF"}
+            </button>
+          ) : isVideo ? (
+            <button
+              className="btn btn-sm btn-outline-primary"
+              onClick={() => setOpen((o) => !o)}
+            >
+              {open ? "Hide Video" : "Watch Video"}
+            </button>
+          ) : null}
 
-          <div className="form-check">
-            <input
-              type="checkbox"
-              className="form-check-input"
-              id={`done-${section.id}`}
-              checked={checked}
-              disabled={!!toggling}
-              onChange={(e) => onToggle(section.id, e.target.checked)}
-            />
-            <label htmlFor={`done-${section.id}`} className="form-check-label">
-              Done
-            </label>
-          </div>
+          {/* Progress tracking only for students */}
+          {role === "student" && (
+            <div className="form-check">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                checked={checked}
+                disabled={!!toggling}
+                onChange={(e) => onToggle(section.id, e.target.checked)}
+              />
+              <label className="form-check-label">Done</label>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Inline Text Reader */}
+      {/* Inline Previews */}
       {isText && open && (
-        <div className="card mt-3 shadow-sm">
-          <div className="card-header py-2 d-flex justify-content-between">
-            <span className="small text-muted">Text content</span>
-            <button
-              className="btn btn-sm btn-light"
-              onClick={() => setOpen(false)}
-            >
-              Close
-            </button>
-          </div>
+        <div className="card mt-2">
           <div className="card-body">
-            <pre className="section-text-pre mb-0">
-              {section.textContent || "No content."}
+            <pre className="section-text-pre">
+              {section.textContent || "No content"}
             </pre>
           </div>
+        </div>
+      )}
+
+      {isPdf && open && (
+        <iframe
+          src={section.contentUrl}
+          title="PDF Preview"
+          width="100%"
+          height="500px"
+          style={{ border: "1px solid #ddd", marginTop: "10px" }}
+        />
+      )}
+
+      {isVideo && open && (
+        <div className="mt-2">
+          <video width="100%" height="auto" controls>
+            <source src={section.contentUrl} type="video/mp4" />
+            Your browser does not support video.
+          </video>
         </div>
       )}
     </li>
@@ -94,27 +108,27 @@ export default function CourseView() {
   const [full, setFull] = useState(null);
   const [enr, setEnr] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [toggling, setToggling] = useState({}); // map: sectionId -> boolean
+  const [toggling, setToggling] = useState({});
+  const [error, setError] = useState("");
 
-  // Load summary (always)
+  // Load course summary
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
         const { data } = await getPublicCourseSummary(id);
         setSummary(data);
+      } catch {
+        setError("Failed to load course.");
       } finally {
         setLoading(false);
       }
     })();
   }, [id]);
 
-  // Load my enrollment if logged in
+  // Load enrollment (only students)
   const loadEnrollment = async () => {
-    if (!user) {
-      setEnr(null);
-      return;
-    }
+    if (!user || user.role !== "student") return setEnr(null);
     try {
       const { data } = await getMyEnrollment(id);
       setEnr(data);
@@ -122,14 +136,20 @@ export default function CourseView() {
       setEnr(null);
     }
   };
+
   useEffect(() => {
     loadEnrollment();
   }, [id, user]);
 
-  // Load full course (with sections) only when enrolled
+  // Load sections (students if enrolled, or creators/admins always)
   useEffect(() => {
     (async () => {
-      if (user && (enr?.status === "active" || enr?.status === "completed")) {
+      if (
+        (user?.role === "student" &&
+          (enr?.status === "active" || enr?.status === "completed")) ||
+        user?.role === "creator" ||
+        user?.role === "admin"
+      ) {
         const { data } = await getPublicCourseFull(id);
         setFull(data);
       } else {
@@ -138,22 +158,31 @@ export default function CourseView() {
     })();
   }, [id, enr, user]);
 
+  // Enroll student
   const onEnroll = async () => {
-    if (!user) {
-      navigate(`/login?redirect=/course/${id}`);
-      return;
+    if (!user) return navigate(`/login?redirect=/course/${id}`);
+    try {
+      await enrollCourse(id);
+      await loadEnrollment();
+    } catch (err) {
+      setError(err.response?.data?.message || "Could not enroll.");
     }
-    await enrollCourse(id);
-    await loadEnrollment();
   };
 
+  // Unenroll student
   const onUnenroll = async () => {
     if (!window.confirm("Unenroll from this course?")) return;
-    await unenrollCourse(id);
-    setFull(null);
-    await loadEnrollment();
+    try {
+      await unenrollCourse(id);
+      // reset state → student can re-enroll
+      setEnr(null);
+      setFull(null);
+    } catch {
+      setError("Failed to unenroll.");
+    }
   };
 
+  // Toggle section done
   const onToggle = async (sectionId, done) => {
     setToggling((m) => ({ ...m, [sectionId]: true }));
     try {
@@ -164,199 +193,86 @@ export default function CourseView() {
     }
   };
 
-  if (loading || !summary)
-    return <div className="container py-4">Loading…</div>;
+  if (loading) return <div className="container py-4">Loading…</div>;
+  if (error) return <div className="alert alert-danger">{error}</div>;
 
-  const { title, subject, gradeLevel, language, description } = summary;
+  const { title, subject, gradeLevel, language, description } = summary || {};
   const completedIds = new Set(enr?.completedSectionIds || []);
   const progress = enr?.progress || 0;
 
   return (
     <div className="container py-4">
-      {/* Header */}
-      <div className="row g-4">
-        <div className="col-lg-8">
-          <div className="d-flex align-items-start justify-content-between">
+      <h2>{title}</h2>
+      <div className="text-muted">
+        {subject} • {gradeLevel} • {language?.toUpperCase() || "EN"}
+      </div>
+      <p>{description}</p>
+
+      {/* Student Enrollment Actions */}
+      {user?.role === "student" && (
+        <div className="mb-3">
+          {enr && enr.status !== "cancelled" ? (
             <div>
-              <h2 className="mb-1">{title}</h2>
-              <div className="d-flex gap-2 flex-wrap">
-                <span className="badge bg-light text-dark text-uppercase">
-                  {subject}
-                </span>
-                <span className="badge bg-secondary">{gradeLevel || "—"}</span>
-                <span className="badge bg-info text-dark">
-                  {language?.toUpperCase() || "EN"}
-                </span>
-              </div>
+              <span className="badge bg-info">
+                {enr.status} • {progress}%
+              </span>
+              <button
+                className="btn btn-outline-danger ms-2"
+                onClick={onUnenroll}
+              >
+                Unenroll
+              </button>
             </div>
-
-            {/* Sticky on lg screens */}
-            <div className="d-none d-lg-block" style={{ minWidth: 200 }}>
-              {user ? (
-                enr ? (
-                  <div className="card sticky-top" style={{ top: 80 }}>
-                    <div className="card-body">
-                      <div className="mb-2">
-                        <span className="badge bg-info">
-                          {enr.status} • {progress}%
-                        </span>
-                      </div>
-                      <div className="progress mb-2" style={{ height: 8 }}>
-                        <div
-                          className="progress-bar"
-                          role="progressbar"
-                          style={{ width: `${progress}%` }}
-                          aria-valuenow={progress}
-                          aria-valuemin="0"
-                          aria-valuemax="100"
-                        />
-                      </div>
-                      <button
-                        className="btn btn-outline-danger w-100"
-                        onClick={onUnenroll}
-                      >
-                        Unenroll
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="card sticky-top" style={{ top: 80 }}>
-                    <div className="card-body">
-                      <div className="mb-2 text-muted small">
-                        Enroll to access sections & track progress.
-                      </div>
-                      <button
-                        className="btn btn-primary w-100"
-                        onClick={onEnroll}
-                      >
-                        Enroll
-                      </button>
-                    </div>
-                  </div>
-                )
-              ) : (
-                <div className="card sticky-top" style={{ top: 80 }}>
-                  <div className="card-body">
-                    <div className="small text-muted mb-2">
-                      Login to enroll this course.
-                    </div>
-                    <button
-                      className="btn btn-outline-primary w-100"
-                      onClick={() => navigate(`/login?redirect=/course/${id}`)}
-                    >
-                      Login
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <p className="mt-3">{description}</p>
-
-          {/* Sections — visible only if user is logged in and enrolled */}
-          {user && enr ? (
-            <>
-              <h5 className="mt-4 d-flex align-items-center gap-3">
-                Sections
-                <span className="badge bg-secondary">{progress}%</span>
-              </h5>
-
-              {!full ? (
-                <div className="text-muted">Loading sections…</div>
-              ) : (
-                <ul className="list-group mt-2">
-                  {(full.sections || []).map((s) => (
-                    <SectionItem
-                      key={s.id}
-                      section={s}
-                      checked={completedIds.has(s.id)}
-                      toggling={toggling[s.id]}
-                      onToggle={onToggle}
-                    />
-                  ))}
-                </ul>
-              )}
-            </>
           ) : (
-            <div className="alert alert-warning mt-4">
-              {user
-                ? "Enroll to access the sections and track your progress."
-                : "Login & enroll to access the sections."}
-            </div>
+            <button className="btn btn-primary" onClick={onEnroll}>
+              Enroll to Access
+            </button>
           )}
         </div>
+      )}
 
-        {/* Mobile Actions (below content) */}
-        <div className="col-lg-4 d-lg-none">
-          <div className="card">
-            <div className="card-body">
-              {user ? (
-                enr ? (
-                  <>
-                    <div className="mb-2">
-                      <span className="badge bg-info">
-                        {enr.status} • {progress}%
-                      </span>
-                    </div>
-                    <div className="progress mb-3" style={{ height: 8 }}>
-                      <div
-                        className="progress-bar"
-                        role="progressbar"
-                        style={{ width: `${progress}%` }}
-                        aria-valuenow={progress}
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                      />
-                    </div>
-                    <button
-                      className="btn btn-outline-danger w-100"
-                      onClick={onUnenroll}
-                    >
-                      Unenroll
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="small text-muted mb-2">
-                      Enroll to access sections & track progress.
-                    </div>
-                    <button
-                      className="btn btn-primary w-100"
-                      onClick={onEnroll}
-                    >
-                      Enroll
-                    </button>
-                  </>
-                )
-              ) : (
-                <>
-                  <div className="small text-muted mb-2">
-                    Login to enroll this course.
-                  </div>
-                  <button
-                    className="btn btn-outline-primary w-100"
-                    onClick={() => navigate(`/login?redirect=/course/${id}`)}
-                  >
-                    Login
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+      {/* Public visitor message */}
+      {!user && (
+        <div className="alert alert-warning">
+          Login to enroll and view course sections.
         </div>
-      </div>
+      )}
 
-      {/* Local styles for the inline reader */}
-      <style>{`
-        .section-text-pre {
-          white-space: pre-wrap;
-          word-break: break-word;
-          line-height: 1.7;
-          font-size: 1rem;
-          color: #212529;
-        }
-      `}</style>
+      {/* Sections */}
+      {full ? (
+        <>
+          <h4 className="mt-3">Sections</h4>
+          {user?.role === "student" && (
+            <div className="progress mb-3" style={{ height: 8 }}>
+              <div
+                className="progress-bar"
+                role="progressbar"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          )}
+
+          <ul className="list-group mt-2">
+            {(full.sections || []).map((s) => (
+              <SectionItem
+                key={s.id}
+                section={s}
+                role={user?.role}
+                checked={completedIds.has(s.id)}
+                toggling={toggling[s.id]}
+                onToggle={onToggle}
+              />
+            ))}
+          </ul>
+        </>
+      ) : (
+        user?.role === "student" &&
+        !enr && (
+          <div className="alert alert-info mt-3">
+            Enroll to unlock course sections.
+          </div>
+        )
+      )}
     </div>
   );
 }
