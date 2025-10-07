@@ -8,7 +8,7 @@ export const Certificate = sequelize.define(
     course_id: { type: DataTypes.STRING, allowNull: false },
     student_id: { type: DataTypes.STRING, allowNull: false },
     exam_id: { type: DataTypes.STRING, allowNull: false },
-    marks: { type: DataTypes.F, allowNull: false },
+    marks: { type: DataTypes.INTEGER, allowNull: false },
     status: {
       type: DataTypes.ENUM("excellent", "good", "average", "fail"),
       allowNull: false,
