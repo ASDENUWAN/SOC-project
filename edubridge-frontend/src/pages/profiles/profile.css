@@ -1,0 +1,77 @@
+.profile-card {
+  position: relative;
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border: 1px solid #ccc;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Avatar */
+.profile-card {
+  position: relative;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.avatar-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 2rem;
+}
+.profile-avatar-lg {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border: 2px solid #090909;
+  border-radius: 50%;
+  display: inline-block;
+}
+.edit-btn,
+.remove-btn {
+  position: absolute;
+  background: #fff;
+  border: none;
+  padding: 0.25rem;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+/* Form spacing */
+.profile-form {
+  margin-top: 1rem;
+}
+.profile-form .form-group {
+  margin-bottom: 1rem;
+}
+.profile-form label {
+  font-weight: 500;
+}
+
+/* Action buttons */
+.profile-form .actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+/* pencil icon at bottom-right */
+.edit-btn {
+  bottom: 0;
+  right: 0;
+}
+
+/* trash icon at bottom-left */
+.remove-btn {
+  bottom: 0;
+  left: 0;
+  color: #d9534f; /* or whatever “danger” color you prefer */
+}
+
+/* tweak icon size if you like */
+.edit-btn i,
+.remove-btn i {
+  font-size: 1rem;
+}
