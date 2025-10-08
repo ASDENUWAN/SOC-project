@@ -1,0 +1,113 @@
+/* Palette helpers */
+.text-slate-800 {
+  color: #2b2f38;
+}
+
+.about-hero .about-hero-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+.hero-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #eef4ff;
+  color: #0d6efd;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.25rem;
+}
+.hero-badge.badge-blue {
+  background: #e9f2ff;
+  color: #0d6efd;
+}
+.hero-badge.badge-green {
+  background: #eaf7ef;
+  color: #1e7e34;
+}
+
+/* Feature cards */
+.feature-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+.icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.2rem;
+}
+.bg-blue {
+  background: #0d6efd;
+}
+.bg-green {
+  background: #28a745;
+}
+.bg-purple {
+  background: #6f42c1;
+}
+.bg-orange {
+  background: #fd7e14;
+}
+.bg-slate {
+  background: #6c757d;
+}
+
+/* Who-section cards */
+.who-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+.who-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.2rem;
+}
+.who-icon.bg-blue {
+  background: #0d6efd;
+}
+.who-icon.bg-green {
+  background: #28a745;
+}
+.who-icon.bg-purple {
+  background: #6f42c1;
+}
+
+/* Steps */
+.step-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem;
+  position: relative;
+}
+.step-index {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 700;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.25);
+}
+
+.tech-pill {
+  font-weight: 500;
+  background: #f1f3f5 !important;
+  color: #495057 !important;
+  border: 1px solid #e9ecef;
+}
