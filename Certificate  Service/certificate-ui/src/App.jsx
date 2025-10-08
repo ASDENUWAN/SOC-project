@@ -1,9 +1,8 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import axios from "axios";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { FaGraduationCap } from "react-icons/fa";
-
 import signature from "./assets/signature.png";
 import seal from "./assets/seal.png";
 import background from "./assets/background.png";
@@ -19,22 +18,22 @@ function autoStatus(marks) {
 }
 
 const StatusBadge = ({ status }) => {
-  const map = {
-    excellent: "success",
-    good: "primary",
-    average: "warning",
-    fail: "danger",
-  };
+  const map = { excellent: "success", good: "primary", average: "warning", fail: "danger" };
   return <span className={`badge bg-${map[status] || "secondary"}`}>{status}</span>;
 };
 
 export default function App() {
   const [form, setForm] = useState({
-    course_id: "", student_id: "", exam_id: "",
-    marks: "", studentName: "", courseTitle: "",
-    status: "auto"
+    course_id: "",
+    student_id: "",
+    exam_id: "",
+    marks: "",
+    studentName: "",
+    courseTitle: "",
+    status: "auto",
   });
   const [rows, setRows] = useState([]);
+  const [quizFound, setQuizFound] = useState(true);
   const ref = useRef();
 
   const status = useMemo(() => {
@@ -44,39 +43,71 @@ export default function App() {
 
   const onChange = (e) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    setForm((f) => ({ ...f, [name]: value }));
   };
 
   const loadRows = async () => {
     const { data } = await axios.get(`${API}/certificates`);
     setRows(data);
   };
-  React.useEffect(() => { loadRows(); }, []);
 
-  // Make PDF from the preview DOM, download for user, and send to backend
+  useEffect(() => {
+    loadRows();
+  }, []);
+
+  // 🔹 Auto-fetch quiz info
+  useEffect(() => {
+    const { course_id, student_id, exam_id } = form;
+    if (course_id && student_id && exam_id) {
+      axios
+        .get(`${API}/certificates/quiz/info`, { params: { course_id, student_id, exam_id } })
+        .then((res) => {
+          const { student_name, course_title, marks, status } = res.data;
+          setForm((f) => ({
+            ...f,
+            marks,
+            studentName: student_name,
+            courseTitle: course_title,
+            status,
+          }));
+          setQuizFound(true);
+        })
+        .catch(() => {
+          setForm((f) => ({
+            ...f,
+            marks: "",
+            studentName: "",
+            courseTitle: "",
+            status: "auto",
+          }));
+          setQuizFound(false);
+        });
+    }
+  }, [form.course_id, form.student_id, form.exam_id]);
+
   const handleGenerate = async () => {
+    if (!quizFound) {
+      alert(" No matching record found in quiz database!");
+      return;
+    }
     if (!ref.current) return;
-
     const canvas = await html2canvas(ref.current, { scale: 2, backgroundColor: null });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("landscape", "pt", "a4");
     const w = pdf.internal.pageSize.getWidth();
     const h = pdf.internal.pageSize.getHeight();
     pdf.addImage(imgData, "PNG", 0, 0, w, h);
-    const pdfDataUrl = pdf.output("datauristring"); // data:application/pdf;base64,...
-
-    // Download for the user
+    const pdfDataUrl = pdf.output("datauristring");
     pdf.save(`certificate-${form.student_id || "student"}.pdf`);
-
-    // Save for "admin" (backend record + public URL)
     const payload = {
       course_id: form.course_id,
       student_id: form.student_id,
       exam_id: form.exam_id,
       marks: Number(form.marks || 0),
+      student_name: form.studentName,
       status: form.status === "auto" ? undefined : form.status,
       issue_date: new Date().toISOString().slice(0, 10),
-      pdfDataUrl
+      pdfDataUrl,
     };
     await axios.post(`${API}/certificates`, payload);
     await loadRows();
@@ -85,7 +116,7 @@ export default function App() {
   return (
     <div className="container py-4">
       <div className="d-flex align-items-center gap-2 mb-3">
-        <div className="header-logo"><FaGraduationCap /> Certificate Service </div>
+        <div className="header-logo"><FaGraduationCap /> Certificate Service</div>
       </div>
 
       <div className="row g-4">
@@ -108,28 +139,23 @@ export default function App() {
                 </div>
                 <div className="col-12 col-sm-6">
                   <label className="form-label">Marks</label>
-                  <input name="marks" type="number" className="form-control" value={form.marks} onChange={onChange}/>
+                  <input name="marks" type="number" className="form-control" value={form.marks} readOnly/>
                 </div>
                 <div className="col-12">
-                  <label className="form-label">Student Name (shown on certificate)</label>
-                  <input name="studentName" className="form-control" value={form.studentName} onChange={onChange}/>
+                  <label className="form-label">Student Name</label>
+                  <input name="studentName" className="form-control" value={form.studentName} readOnly/>
                 </div>
                 <div className="col-12">
-                  <label className="form-label">Course Title (shown on certificate)</label>
-                  <input name="courseTitle" className="form-control" value={form.courseTitle} onChange={onChange}/>
+                  <label className="form-label">Course Title</label>
+                  <input name="courseTitle" className="form-control" value={form.courseTitle} readOnly/>
                 </div>
                 <div className="col-12">
-                  <label className="form-label">Status (optional)</label>
-                  <select name="status" className="form-select" value={form.status} onChange={onChange}>
-                    <option value="auto">Auto (based on marks)</option>
-                    <option value="excellent">excellent</option>
-                    <option value="good">good</option>
-                    <option value="average">average</option>
-                    <option value="fail">fail</option>
-                  </select>
+                  <label className="form-label">Status</label>
+                  <input name="status" className="form-control" value={status} readOnly/>
                 </div>
                 <div className="col-12">
-                  <button className="btn btn-primary" onClick={handleGenerate}>Create Certificate</button>
+                  <button className="btn btn-primary" onClick={handleGenerate} disabled={!quizFound}>Create Certificate</button>
+                  {!quizFound && <div className="text-danger mt-2">No matching quiz data found</div>}
                 </div>
               </div>
             </div>
@@ -140,10 +166,7 @@ export default function App() {
           <div className="p-2 rounded-4" style={{border: "4px solid #e9d8fd"}}>
             <div className="certificate-preview" ref={ref}>
               <div className="certificate-inner" style={{ backgroundImage: `url(${background})`}}>
-                <div className="brand">
-                  <FaGraduationCap className="logo-cap" />
-                  <div style={{fontWeight:800, fontSize:"1.4rem"}}>EDUBRIDGE</div>
-                </div>
+                <div className="brand"><FaGraduationCap className="logo-cap" /><div style={{fontWeight:800, fontSize:"1.4rem"}}>EDUBRIDGE</div></div>
                 <div className="smallmuted">Certificate of Achievement</div>
                 <p className="smallmuted mt-2">This is to certify that</p>
                 <div className="certificate-name">{form.studentName || "Your Student Name"}</div>
@@ -154,48 +177,17 @@ export default function App() {
                   <span className="badge-chip">Marks: {form.marks || "—"}</span>
                   <span className="badge-chip">Status: <StatusBadge status={status} /></span>
                 </div>
-                <div className="footer-sign">
-                  <img src={signature} alt="signature" />
-                  <small>Course Instructor</small>
-                </div>
-                <div className="footer-seal">
-                  <img src={seal} alt="seal" />
-                </div>
+                <div className="footer-sign"><img src={signature} alt="signature" /><small>Course Instructor</small></div>
+                <div className="footer-seal"><img src={seal} alt="seal" /></div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <hr className="my-4"/>
-      <h5>Issued Certificates</h5>
-      <div className="table-responsive">
-        <table className="table align-middle">
-          <thead>
-            <tr>
-              <th>ID</th><th>Student</th><th>Course</th><th>Exam</th><th>Marks</th><th>Status</th><th>Issued</th><th>PDF</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(r => (
-              <tr key={r.certificate_id}>
-                <td>{r.certificate_id}</td>
-                <td>{r.student_id}</td>
-                <td>{r.course_id}</td>
-                <td>{r.exam_id}</td>
-                <td>{r.marks}</td>
-                <td><StatusBadge status={r.status} /></td>
-                <td>{r.issue_date}</td>
-                <td>
-                  {r.file_url
-                    ? <a className="btn btn-outline-secondary btn-sm" href={r.file_url} target="_blank">Open</a>
-                    : <span className="text-muted">—</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      
+     
     </div>
   );
 }
+

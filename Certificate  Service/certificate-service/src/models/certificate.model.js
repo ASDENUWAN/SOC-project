@@ -8,6 +8,7 @@ export const Certificate = sequelize.define(
     course_id: { type: DataTypes.STRING, allowNull: false },
     student_id: { type: DataTypes.STRING, allowNull: false },
     exam_id: { type: DataTypes.STRING, allowNull: false },
+    student_name: { type: DataTypes.STRING, allowNull: false },
     marks: { type: DataTypes.INTEGER, allowNull: false },
     status: {
       type: DataTypes.ENUM("excellent", "good", "average", "fail"),
@@ -19,7 +20,8 @@ export const Certificate = sequelize.define(
   },
   {
     tableName: "Certificate",
-    timestamps: true, // adds createdAt
-    updatedAt: false, // we don't need updatedAt for now
+    timestamps: true,
+    updatedAt: false,
   }
 );
+

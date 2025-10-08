@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 03, 2025 at 06:28 PM
+-- Generation Time: Oct 08, 2025 at 03:27 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -24,47 +24,49 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `certificate`
+-- Table structure for table `quizresults`
 --
 
-CREATE TABLE `certificate` (
-  `certificate_id` int(15) NOT NULL,
-  `course_id` varchar(255) NOT NULL,
-  `student_id` varchar(255) NOT NULL,
-  `exam_id` varchar(255) NOT NULL,
-  `marks` int(11) NOT NULL,
-  `status` enum('excellent','good','average','fail') NOT NULL DEFAULT 'fail',
-  `file_url` text DEFAULT NULL,
-  `issue_date` date NOT NULL,
-  `createdAt` datetime NOT NULL
+CREATE TABLE `quizresults` (
+  `id` int(11) NOT NULL,
+  `course_id` varchar(50) NOT NULL,
+  `student_id` varchar(50) NOT NULL,
+  `exam_id` varchar(50) NOT NULL,
+  `student_name` varchar(100) NOT NULL,
+  `course_title` varchar(100) NOT NULL,
+  `marks` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `certificate`
+-- Dumping data for table `quizresults`
 --
 
-INSERT INTO `certificate` (`certificate_id`, `course_id`, `student_id`, `exam_id`, `marks`, `status`, `file_url`, `issue_date`, `createdAt`) VALUES
-(1, '45', '345', '67', 45, 'average', NULL, '2025-09-03', '2025-09-03 16:21:28');
+INSERT INTO `quizresults` (`id`, `course_id`, `student_id`, `exam_id`, `student_name`, `course_title`, `marks`) VALUES
+(1, 'C101', 'S001', 'E001', 'Alice Johnson', 'Web Development', 85),
+(2, 'C102', 'S002', 'E002', 'Bob Smith', 'Database Systems', 65),
+(3, 'C103', 'S003', 'E003', 'Charlie Brown', 'Networking Basics', 50),
+(4, 'C104', 'S004', 'E004', 'Diana Prince', 'Python Programming', 38),
+(5, 'C105', 'S005', 'E005', 'Evan Peters', 'AI Foundations', 20);
 
 --
 -- Indexes for dumped tables
 --
 
 --
--- Indexes for table `certificate`
+-- Indexes for table `quizresults`
 --
-ALTER TABLE `certificate`
-  ADD PRIMARY KEY (`certificate_id`);
+ALTER TABLE `quizresults`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT for table `certificate`
+-- AUTO_INCREMENT for table `quizresults`
 --
-ALTER TABLE `certificate`
-  MODIFY `certificate_id` int(15) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+ALTER TABLE `quizresults`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -26,5 +26,5 @@ const PORT = process.env.PORT || 4021;
 (async () => {
   await testConnection();
   await sequelize.sync({ alter: true });
-  app.listen(PORT, () => console.log(`🚀 Certificate Service listening on ${PORT}`));
+  app.listen(PORT, () => console.log(`Certificate Service listening on ${PORT}`));
 })();
