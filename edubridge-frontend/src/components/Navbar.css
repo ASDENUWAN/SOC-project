@@ -1,0 +1,71 @@
+/* Light grey navbar */
+.navbar-soft {
+  background: #dededf; /* light grey */
+  border-bottom: 1px solid #e5e7eb; /* subtle divider */
+}
+
+/* Slate helpers */
+.text-slate-800 {
+  color: #1f2937;
+}
+.text-slate-700 {
+  color: #374151;
+}
+
+/* Brand chip (soft blue accent) */
+.brand-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e9f2ff; /* very light blue */
+  color: #0d6efd;
+  box-shadow: inset 0 0 0 1px #cfe0ff;
+}
+
+/* Links: slate by default, primary on hover/active with underline */
+.nav-link-soft {
+  color: #334155; /* slate */
+  position: relative;
+  padding: 0.5rem 0.75rem;
+  transition: color 0.15s ease-in-out;
+}
+.nav-link-soft:hover,
+.nav-link-soft.active {
+  color: #0d6efd; /* primary accent */
+}
+.nav-link-soft.active::after,
+.nav-link-soft:hover::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.25rem;
+  height: 2px;
+  background: #0d6efd;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+/* Ghost button for avatar to match grey nav */
+.btn-ghost-soft {
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+.btn-ghost-soft:hover {
+  background: #f8fafc;
+}
+
+/* Avatar ring (soft) */
+.ring-soft {
+  box-shadow: 0 0 0 2px #e5e7eb;
+}
+
+/* Dropdown slight elevation on grey nav */
+.navbar .dropdown-menu {
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
