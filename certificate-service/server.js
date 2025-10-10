@@ -21,7 +21,7 @@ app.use("/uploads", express.static(uploads));
 
 app.use("/api/certificates", certificateRoutes);
 
-const PORT = process.env.PORT || 4021;
+const PORT = process.env.PORT || 4070;
 
 (async () => {
   await testConnection();
