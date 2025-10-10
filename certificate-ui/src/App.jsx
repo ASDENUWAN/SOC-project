@@ -7,7 +7,7 @@ import signature from "./assets/signature.png";
 import seal from "./assets/seal.png";
 import background from "./assets/background.png";
 
-const API = import.meta.env.VITE_API_BASE || "http://localhost:4021/api";
+const API = import.meta.env.VITE_API_BASE || "http://localhost:4070/api";
 
 function autoStatus(marks) {
   const m = Number(marks || 0);
