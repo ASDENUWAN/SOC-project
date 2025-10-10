@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 _metadata.json
 .vite
-config.bat
+.env
