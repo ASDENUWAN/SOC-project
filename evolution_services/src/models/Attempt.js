@@ -7,5 +7,5 @@ export const Attempt = sequelize.define("Attempt", {
   studentId: { type: DataTypes.INTEGER, allowNull: false },
   answers: { type: DataTypes.JSON },
   marks: { type: DataTypes.FLOAT },
-  status: { type: DataTypes.STRING, defaultValue: "pending" },
+  status: { type: DataTypes.STRING },
 });

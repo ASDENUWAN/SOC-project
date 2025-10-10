@@ -6,5 +6,5 @@ export const Quiz = sequelize.define("Quiz", {
   courseId: { type: DataTypes.INTEGER, allowNull: false },
   creatorId: { type: DataTypes.INTEGER, allowNull: false },
   title: { type: DataTypes.STRING, allowNull: false },
-  description: { type: DataTypes.TEXT },
+  description: { type: DataTypes.STRING },
 });
